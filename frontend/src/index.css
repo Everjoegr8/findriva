@@ -94,6 +94,7 @@ input:focus, select:focus, textarea:focus, .btn:focus-visible { outline: 2px sol
 .tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid var(--border); margin-bottom: 1.25rem; overflow-x: auto; }
 .tabs a { padding: 0.6rem 0.85rem; text-decoration: none; color: var(--muted); border-bottom: 2px solid transparent; white-space: nowrap; }
 .tabs a.active { color: var(--brand-strong); border-color: var(--brand); font-weight: 600; }
+@media (min-width: 900px) { .tabs { flex-wrap: wrap; overflow-x: visible; } }
 
 .stat .value { font-size: 1.7rem; font-weight: 700; }
 .stat .label { color: var(--muted); font-size: 0.85rem; }

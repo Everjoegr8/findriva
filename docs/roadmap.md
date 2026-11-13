@@ -38,7 +38,8 @@ These are the blueprint's "decisions to validate" (section 21), decided so the b
 | 3 | Bing Webmaster Tools API (reports) | Blocked on credentials |
 | 3 | Results page and monthly report (print/PDF) from measured data | Done |
 | 3 | Weekly rank observations for tracked keywords, history and change, plan allowance and daily cap | Done |
-| 5 | Google Business Profile API, CMS connectors (WordPress, Shopify), local grid, reviews, AI answer visibility | Planned |
+| 5 | Google Business Profile: connect, compare facts, daily actions, reviews inbox with approved replies | Done (live once Google approves Business Profile API access) |
+| 5 | CMS connectors (WordPress, Shopify), local grid, AI answer visibility | Planned |
 
 ## External integrations that need credentials or approval
 
@@ -47,7 +48,7 @@ None of these are faked; the product shows "not connected" until they exist.
 | Integration | What is needed | Owner action |
 | --- | --- | --- |
 | Google Search Console | Google Cloud project, OAuth consent screen (verification for sensitive scopes), client id/secret | Create project and submit consent screen |
-| Google Business Profile API | Access request approved by Google | Apply; can take weeks |
+| Google Business Profile API | Access request approved by Google; enable My Business Account Management, Business Information, Business Profile Performance and My Business (v4 reviews) APIs on the same Google Cloud project | Apply; can take weeks |
 | Bing Webmaster Tools | API key / OAuth app | Register app |
 | IndexNow | Per-site key file hosted on the customer domain | Generated per site in Phase 3 |
 | Keyword / SERP data | Licensed provider account (e.g. DataForSEO) and budget | Choose provider, fund account |

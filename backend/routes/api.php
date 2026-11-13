@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BillingController;
 use App\Http\Controllers\Api\V1\BusinessChildController;
 use App\Http\Controllers\Api\V1\BusinessController;
+use App\Http\Controllers\Api\V1\BusinessProfileController;
 use App\Http\Controllers\Api\V1\ContentController;
 use App\Http\Controllers\Api\V1\CoverageController;
 use App\Http\Controllers\Api\V1\DigitalAssetController;
@@ -108,12 +109,20 @@ Route::prefix('v1')->group(function () {
 
                 Route::get('integrations', [IntegrationController::class, 'index']);
                 Route::post('integrations/google/connect', [IntegrationController::class, 'connectGoogle'])->middleware('verified');
+                Route::post('integrations/google-business/connect', [IntegrationController::class, 'connectBusinessProfile'])->middleware('verified');
                 Route::patch('integrations/{connection}', [IntegrationController::class, 'selectProperty']);
                 Route::post('integrations/{connection}/sync', [IntegrationController::class, 'sync'])->middleware('throttle:research');
                 Route::delete('integrations/{connection}', [IntegrationController::class, 'disconnect']);
                 Route::post('indexnow/key', [IntegrationController::class, 'indexNowKey']);
                 Route::post('indexnow/verify', [IntegrationController::class, 'indexNowVerify'])->middleware('throttle:research');
                 Route::post('indexnow/submit', [IntegrationController::class, 'indexNowSubmit'])->middleware('throttle:research');
+
+                Route::get('google-profile', [BusinessProfileController::class, 'show']);
+                Route::get('reviews', [BusinessProfileController::class, 'reviews']);
+                Route::get('reviews/{review}/suggestion', [BusinessProfileController::class, 'suggestion']);
+                Route::patch('reviews/{review}', [BusinessProfileController::class, 'saveReply']);
+                Route::post('reviews/{review}/submit', [BusinessProfileController::class, 'submitReply']);
+                Route::post('reviews/{review}/decision', [BusinessProfileController::class, 'decideReply'])->middleware('verified');
 
                 Route::get('rankings', [RankingController::class, 'index']);
                 Route::post('rankings/check', [RankingController::class, 'check'])->middleware('throttle:research');

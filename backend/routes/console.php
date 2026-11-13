@@ -1,6 +1,7 @@
 <?php
 
 use App\Jobs\CheckRankings;
+use App\Jobs\SyncBusinessProfile;
 use App\Jobs\SyncSearchConsole;
 use App\Models\IntegrationConnection;
 use App\Models\Keyword;
@@ -19,6 +20,13 @@ Schedule::call(function () {
         ->where('status', 'connected')->whereNotNull('property')
         ->each(fn ($c) => SyncSearchConsole::dispatch($c->workspace_id, $c->id));
 })->dailyAt('04:30')->name('sync-search-console')->onOneServer();
+
+// Nightly Google Business Profile import (profile facts, reviews, daily actions).
+Schedule::call(function () {
+    IntegrationConnection::withoutGlobalScopes()->where('provider', 'google_business_profile')
+        ->where('status', 'connected')->whereNotNull('property')
+        ->each(fn ($c) => SyncBusinessProfile::dispatch($c->workspace_id, $c->id));
+})->dailyAt('04:45')->name('sync-business-profile')->onOneServer();
 
 // Paid plans whose period ended (after the grace period) go back to Free.
 Schedule::call(fn () => app(BillingService::class)->expireLapsed())->dailyAt('02:00')->name('expire-lapsed-plans')->onOneServer();
