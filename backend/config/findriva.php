@@ -52,6 +52,25 @@ return [
     // Base URL of public business pages (https://findriva.com/b/{slug}).
     'public_url' => env('FINDRIVA_PUBLIC_URL', env('APP_URL', 'http://localhost')),
 
+    // Where the dashboard lives, for redirects after connecting an account.
+    'app_url' => env('FINDRIVA_APP_URL', env('APP_URL', 'http://localhost')),
+
+    'search_console' => [
+        'scope' => 'https://www.googleapis.com/auth/webmasters.readonly',
+        'backfill_days' => 90,
+        // Google finalises data about 2-3 days late; we only import finished days.
+        'lag_days' => 3,
+        'max_rows' => 25000,
+        'max_pages' => 4,
+    ],
+
+    'indexnow' => [
+        'endpoint' => env('INDEXNOW_ENDPOINT', 'https://api.indexnow.org/indexnow'),
+        // Findriva's own key, for public business pages on our domain. Empty = do not submit.
+        'platform_key' => env('FINDRIVA_INDEXNOW_KEY'),
+        'max_urls' => 1000,
+    ],
+
     'keywords' => [
         // dataforseo, or null for "seeds only". Volumes stay "not measured" without a provider.
         'provider' => env('FINDRIVA_KEYWORD_PROVIDER'),

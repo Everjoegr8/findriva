@@ -10,11 +10,11 @@ class DomainProperty extends Model
 {
     use BelongsToWorkspace;
 
-    protected $fillable = ['workspace_id', 'business_id', 'domain', 'canonical_host', 'verification_status', 'verification_token', 'verified_at'];
+    protected $fillable = ['workspace_id', 'business_id', 'domain', 'canonical_host', 'verification_status', 'verification_token', 'verified_at', 'verification_method', 'indexnow_key', 'indexnow_verified_at'];
 
     protected function casts(): array
     {
-        return ['verified_at' => 'datetime'];
+        return ['verified_at' => 'datetime', 'indexnow_verified_at' => 'datetime'];
     }
 
     public function business(): BelongsTo

@@ -10,6 +10,8 @@ use App\Http\Controllers\Api\V1\ContentController;
 use App\Http\Controllers\Api\V1\CoverageController;
 use App\Http\Controllers\Api\V1\DigitalAssetController;
 use App\Http\Controllers\Api\V1\GrowthController;
+use App\Http\Controllers\Api\V1\IntegrationController;
+use App\Http\Controllers\Api\V1\ResultsController;
 use App\Http\Controllers\Api\V1\WorkspaceController;
 use Illuminate\Support\Facades\Route;
 
@@ -18,6 +20,9 @@ Route::prefix('v1')->group(function () {
         Route::post('register', [AuthController::class, 'register']);
         Route::post('login', [AuthController::class, 'login']);
     });
+
+    // Google sends the browser back here after consent. Authenticated by the one-time state value.
+    Route::get('integrations/google/callback', [IntegrationController::class, 'googleCallback'])->middleware('throttle:auth');
 
     Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::post('auth/logout', [AuthController::class, 'logout']);
@@ -82,6 +87,18 @@ Route::prefix('v1')->group(function () {
                 Route::post('content/{content}/submit', [ContentController::class, 'submit']);
                 Route::post('content/{content}/decision', [ContentController::class, 'decide']);
                 Route::post('content/{content}/apply', [ContentController::class, 'apply']);
+
+                Route::get('integrations', [IntegrationController::class, 'index']);
+                Route::post('integrations/google/connect', [IntegrationController::class, 'connectGoogle']);
+                Route::patch('integrations/{connection}', [IntegrationController::class, 'selectProperty']);
+                Route::post('integrations/{connection}/sync', [IntegrationController::class, 'sync'])->middleware('throttle:research');
+                Route::delete('integrations/{connection}', [IntegrationController::class, 'disconnect']);
+                Route::post('indexnow/key', [IntegrationController::class, 'indexNowKey']);
+                Route::post('indexnow/verify', [IntegrationController::class, 'indexNowVerify'])->middleware('throttle:research');
+                Route::post('indexnow/submit', [IntegrationController::class, 'indexNowSubmit'])->middleware('throttle:research');
+
+                Route::get('performance', [ResultsController::class, 'performance']);
+                Route::get('report', [ResultsController::class, 'report']);
 
                 Route::get('{type}', [BusinessChildController::class, 'index'])->whereIn('type', ['aliases', 'locations', 'contacts', 'services', 'products']);
                 Route::post('{type}', [BusinessChildController::class, 'store'])->whereIn('type', ['aliases', 'locations', 'contacts', 'services', 'products']);

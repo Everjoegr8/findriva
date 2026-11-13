@@ -94,6 +94,11 @@ class Business extends Model
         return $this->hasMany(ContentAsset::class);
     }
 
+    public function integrations(): HasMany
+    {
+        return $this->hasMany(IntegrationConnection::class);
+    }
+
     public function hasWebsite(): bool
     {
         return ! empty($this->website_url);

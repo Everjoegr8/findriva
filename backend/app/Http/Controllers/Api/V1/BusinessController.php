@@ -8,6 +8,8 @@ use App\Http\Requests\BusinessRules;
 use App\Http\Requests\OnboardBusinessRequest;
 use App\Http\Resources\BusinessResource;
 use App\Models\Business;
+use App\Models\IntegrationConnection;
+use App\Models\SearchPerformance;
 use App\Services\Audit\AuditRunner;
 use App\Services\AuditLogger;
 use App\Services\BusinessService;
@@ -126,13 +128,31 @@ class BusinessController extends Controller
                 'done_unverified' => $actions->where('status.value', 'done')->count(),
                 'verified' => $actions->where('status.value', 'verified')->count(),
             ],
-            // Not measured until a search performance source is connected (Phase 3). Never estimated.
-            'search_engine_data' => [
-                'search_console' => ['status' => 'not_connected', 'note' => 'Impressions, clicks and indexing are reported only from your own Google Search Console once connected.'],
-                'bing_webmaster' => ['status' => 'not_connected'],
-                'rank_tracking' => ['status' => 'not_started', 'note' => 'Rank observations need a licensed data provider; we never invent positions.'],
-            ],
+            // Only from the business's own connected accounts. Never estimated.
+            'search_engine_data' => $this->searchData($business),
             'open_issues_by_category' => $issues->groupBy('category')->map->count(),
         ]]);
+    }
+
+    private function searchData(Business $business): array
+    {
+        $c = IntegrationConnection::query()->where('business_id', $business->id)->where('provider', 'google_search_console')->first();
+        $gsc = ['status' => 'not_connected', 'note' => 'Impressions, clicks and indexing are reported only from your own Google Search Console once connected.'];
+        if ($c) {
+            $gsc = ['status' => $c->status, 'property' => $c->property, 'data_through' => $c->data_through?->toDateString()];
+            if ($c->data_through) {
+                $from = $c->data_through->copy()->subDays(27)->toDateString();
+                $rows = SearchPerformance::query()->where('integration_connection_id', $c->id)->where('grain', 'total')
+                    ->whereBetween('date', [$from, $c->data_through->toDateString()])->get();
+                $gsc['last_28_days'] = ['clicks' => (int) $rows->sum('clicks'), 'impressions' => (int) $rows->sum('impressions')];
+            }
+        }
+        $domain = $business->domains()->first();
+
+        return [
+            'search_console' => $gsc,
+            'indexnow' => ['status' => $domain?->indexnow_verified_at ? 'key_verified' : 'not_set_up'],
+            'rank_tracking' => ['status' => 'not_started', 'note' => 'Rank observations need a licensed data provider; we never invent positions.'],
+        ];
     }
 }

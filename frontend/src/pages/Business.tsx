@@ -12,6 +12,7 @@ import FixesTab from './business/Fixes'
 import KeywordsTab from './business/Keywords'
 import ContentTab from './business/Content'
 import PublicPageTab from './business/PublicPage'
+import ResultsTab from './business/Results'
 
 export function useBusiness(id: string | undefined) {
   const { workspaceId } = useAuth()
@@ -29,7 +30,7 @@ export default function BusinessPage() {
 
   return (
     <div>
-      <div className="row between" style={{ marginBottom: '0.75rem' }}>
+      <div className="row between no-print" style={{ marginBottom: '0.75rem' }}>
         <div>
           <h1 style={{ marginBottom: 0 }}>{b.name}</h1>
           <div className="row small muted">
@@ -40,6 +41,7 @@ export default function BusinessPage() {
       </div>
       <nav className="tabs">
         <NavLink end to={base}>Overview</NavLink>
+        <NavLink to={`${base}/results`}>Results</NavLink>
         <NavLink to={`${base}/actions`}>Action Centre</NavLink>
         <NavLink to={`${base}/audit`}>Discoverability audit</NavLink>
         <NavLink to={`${base}/fixes`}>Ready-made fixes</NavLink>
@@ -51,6 +53,7 @@ export default function BusinessPage() {
       </nav>
       <Routes>
         <Route index element={<OverviewTab detail={q.data} />} />
+        <Route path="results" element={<ResultsTab business={b} />} />
         <Route path="actions" element={<ActionsTab businessId={b.id} />} />
         <Route path="audit" element={<AuditTab business={b} />} />
         <Route path="fixes" element={<FixesTab business={b} />} />

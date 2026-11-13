@@ -27,6 +27,10 @@ services:
     <<: *api
     command: php artisan queue:work --queue=crawl,scan,default --tries=2
     ports: []
+  scheduler:
+    <<: *api
+    command: php artisan schedule:work
+    ports: []
   web:
     image: node:22
     working_dir: /app
