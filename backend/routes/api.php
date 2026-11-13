@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\CoverageController;
 use App\Http\Controllers\Api\V1\DigitalAssetController;
 use App\Http\Controllers\Api\V1\GrowthController;
 use App\Http\Controllers\Api\V1\IntegrationController;
+use App\Http\Controllers\Api\V1\RankingController;
 use App\Http\Controllers\Api\V1\ResultsController;
 use App\Http\Controllers\Api\V1\WorkspaceController;
 use Illuminate\Support\Facades\Route;
@@ -113,6 +114,12 @@ Route::prefix('v1')->group(function () {
                 Route::post('indexnow/key', [IntegrationController::class, 'indexNowKey']);
                 Route::post('indexnow/verify', [IntegrationController::class, 'indexNowVerify'])->middleware('throttle:research');
                 Route::post('indexnow/submit', [IntegrationController::class, 'indexNowSubmit'])->middleware('throttle:research');
+
+                Route::get('rankings', [RankingController::class, 'index']);
+                Route::post('rankings/check', [RankingController::class, 'check'])->middleware('throttle:research');
+                Route::get('competitors', [RankingController::class, 'competitors']);
+                Route::post('competitors', [RankingController::class, 'store']);
+                Route::patch('competitors/{competitor}', [RankingController::class, 'update']);
 
                 Route::get('performance', [ResultsController::class, 'performance']);
                 Route::get('report', [ResultsController::class, 'report']);

@@ -10,6 +10,9 @@ use App\Services\Crawler\HostResolver;
 use App\Services\Keywords\DataForSeoKeywordProvider;
 use App\Services\Keywords\KeywordResearchProvider;
 use App\Services\Keywords\NullKeywordProvider;
+use App\Services\Rankings\DataForSeoSerpProvider;
+use App\Services\Rankings\NullSerpProvider;
+use App\Services\Rankings\SerpProvider;
 use App\Support\Tenancy\CurrentWorkspace;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -26,6 +29,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(KeywordResearchProvider::class, fn () => match (config('findriva.keywords.provider')) {
             'dataforseo' => new DataForSeoKeywordProvider((array) config('findriva.keywords.dataforseo')),
             default => new NullKeywordProvider,
+        });
+        $this->app->bind(SerpProvider::class, fn () => match (config('findriva.rankings.provider')) {
+            'dataforseo' => new DataForSeoSerpProvider((array) config('findriva.keywords.dataforseo') + ['estimated_cost_per_check' => config('findriva.rankings.estimated_cost_per_check')]),
+            default => new NullSerpProvider,
         });
         $this->app->bind(ContentGenerator::class, fn ($app) => config('findriva.content.generator') === 'claude' && filled(config('services.anthropic.key'))
             ? new ClaudeContentGenerator((string) config('services.anthropic.key'), (string) config('findriva.content.claude_model'))

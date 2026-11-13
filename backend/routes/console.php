@@ -1,7 +1,9 @@
 <?php
 
+use App\Jobs\CheckRankings;
 use App\Jobs\SyncSearchConsole;
 use App\Models\IntegrationConnection;
+use App\Models\Keyword;
 use App\Services\Billing\BillingService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -20,3 +22,9 @@ Schedule::call(function () {
 
 // Paid plans whose period ended (after the grace period) go back to Free.
 Schedule::call(fn () => app(BillingService::class)->expireLapsed())->dailyAt('02:00')->name('expire-lapsed-plans')->onOneServer();
+
+// Weekly live position check for tracked keywords (Mondays, before the working week starts in Lagos).
+Schedule::call(function () {
+    Keyword::withoutGlobalScopes()->where('status', 'tracked')->select('workspace_id', 'business_id')->distinct()
+        ->get()->each(fn ($k) => CheckRankings::dispatch($k->workspace_id, $k->business_id, true));
+})->weeklyOn(1, '05:00')->name('check-rankings')->onOneServer();

@@ -29,7 +29,7 @@ These are the blueprint's "decisions to validate" (section 21), decided so the b
 | 1 | Email verification, password reset, authenticator-app MFA with recovery codes | Done (emails send once Resend is configured) |
 | 2 | Keyword provider adapter (`KeywordResearchProvider`) + DataForSEO, 30-day cache, daily spend cap per workspace | Done (live data once the DataForSEO account is funded) |
 | 2 | Keyword clustering and intent labelling | Done |
-| 2 | SERP/competitor adapter | Next |
+| 2 | SERP/competitor adapter (`SerpProvider` + DataForSEO), competitor map with directories kept apart | Done (live once DataForSEO is funded) |
 | 2 | Content Studio: drafts only from approved facts, claim checker, approvals, version history; optional Claude polishing | Done |
 | 2 | Generated fixes: robots.txt, sitemap.xml, LocalBusiness JSON-LD, Open Graph tags | Done |
 | 2 | Hosted one-page public page (server-rendered, quality gate, owner/admin publish) | Done |
@@ -37,7 +37,7 @@ These are the blueprint's "decisions to validate" (section 21), decided so the b
 | 3 | IndexNow (Bing, Yandex, Naver, Seznam) with per-site key check | Done |
 | 3 | Bing Webmaster Tools API (reports) | Blocked on credentials |
 | 3 | Results page and monthly report (print/PDF) from measured data | Done |
-| 3 | Rank observations via licensed provider | Planned |
+| 3 | Weekly rank observations for tracked keywords, history and change, plan allowance and daily cap | Done |
 | 5 | Google Business Profile API, CMS connectors (WordPress, Shopify), local grid, reviews, AI answer visibility | Planned |
 
 ## External integrations that need credentials or approval
@@ -78,13 +78,16 @@ See `backend/.env.example`. Findriva-specific:
 | `GOOGLE_REDIRECT_URI` | `APP_URL/api/v1/integrations/google/callback` | Must match the OAuth client exactly |
 | `FINDRIVA_APP_URL` | `APP_URL` | Dashboard URL to return to after connecting |
 | `FINDRIVA_INDEXNOW_KEY` | empty | Platform key for public pages; served at `/{key}.txt` |
+| `FINDRIVA_SERP_PROVIDER` | `FINDRIVA_KEYWORD_PROVIDER` | `dataforseo` for live positions (same DataForSEO login) |
+| `FINDRIVA_SERP_DEPTH`, `FINDRIVA_SERP_COST_ESTIMATE` | 30, 0.004 | Results looked at per check; USD budgeted per check |
 | `MAIL_MAILER`, `RESEND_API_KEY`, `MAIL_FROM_ADDRESS` | `log` | `resend` in production; emails are written to the log until then |
 | `PAYSTACK_SECRET_KEY`, `PAYSTACK_PUBLIC_KEY` | empty | Paystack keys; checkout shows "not set up yet" without them |
 | `PAYSTACK_PLAN_STARTER/GROWTH/AGENCY` | empty | Optional plan codes for automatic renewal |
 | `FINDRIVA_PRICE_STARTER/GROWTH/AGENCY` | 990000 / 2990000 / 9900000 | Monthly price in kobo |
 
 Daily limits per plan live in `backend/config/findriva.php`: `keyword_spend_usd_per_day` (free 0, starter 0.50,
-growth 2.00, agency 10.00) and `content_generations_per_day` (5 / 30 / 100 / 500).
+growth 2.00, agency 10.00), `content_generations_per_day` (5 / 30 / 100 / 500), `rank_tracked_keywords`
+(0 / 20 / 100 / 500) and `rank_spend_usd_per_day` (0 / 0.25 / 1.00 / 5.00).
 
 ## Known limitations
 

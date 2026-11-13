@@ -35,6 +35,7 @@
         <env name="FINDRIVA_CRAWLER_DELAY_MS" value="0" force="true"/>
         <env name="FINDRIVA_PUBLIC_URL" value="http://localhost" force="true"/>
         <env name="FINDRIVA_KEYWORD_PROVIDER" value="" force="true"/>
+        <env name="FINDRIVA_SERP_PROVIDER" value="" force="true"/>
         <env name="FINDRIVA_CONTENT_GENERATOR" value="template" force="true"/>
         <env name="FINDRIVA_CRAWLER_ALLOW_PRIVATE" value="false" force="true"/>
     </php>

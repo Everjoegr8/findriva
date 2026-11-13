@@ -13,6 +13,7 @@ import KeywordsTab from './business/Keywords'
 import ContentTab from './business/Content'
 import PublicPageTab from './business/PublicPage'
 import ResultsTab from './business/Results'
+import RankingsTab from './business/Rankings'
 
 export function useBusiness(id: string | undefined) {
   const { workspaceId } = useAuth()
@@ -46,6 +47,7 @@ export default function BusinessPage() {
         <NavLink to={`${base}/audit`}>Discoverability audit</NavLink>
         <NavLink to={`${base}/fixes`}>Ready-made fixes</NavLink>
         <NavLink to={`${base}/keywords`}>Keywords</NavLink>
+        <NavLink to={`${base}/rankings`}>Rankings &amp; competitors</NavLink>
         <NavLink to={`${base}/content`}>Content Studio</NavLink>
         <NavLink to={`${base}/public-page`}>Public page</NavLink>
         <NavLink to={`${base}/profile`}>Business profile</NavLink>
@@ -58,6 +60,7 @@ export default function BusinessPage() {
         <Route path="audit" element={<AuditTab business={b} />} />
         <Route path="fixes" element={<FixesTab business={b} />} />
         <Route path="keywords" element={<KeywordsTab business={b} />} />
+        <Route path="rankings" element={<RankingsTab business={b} />} />
         <Route path="content" element={<ContentTab business={b} />} />
         <Route path="public-page" element={<PublicPageTab business={b} />} />
         <Route path="profile" element={<ProfileTab detail={q.data} />} />

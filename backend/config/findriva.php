@@ -16,6 +16,9 @@ return [
             // Daily ceiling on paid keyword-data lookups (USD). 0 = seeds only, nothing measured.
             'keyword_spend_usd_per_day' => 0.00,
             'content_generations_per_day' => 5,
+            // Tracked keywords whose live search position we check weekly, and the daily spend ceiling for it (USD).
+            'rank_tracked_keywords' => 0,
+            'rank_spend_usd_per_day' => 0.00,
         ],
         'starter' => [
             'label' => 'Starter',
@@ -26,6 +29,9 @@ return [
             // Daily ceiling on paid keyword-data lookups (USD). 0 = seeds only, nothing measured.
             'keyword_spend_usd_per_day' => 0.50,
             'content_generations_per_day' => 30,
+            // Tracked keywords whose live search position we check weekly, and the daily spend ceiling for it (USD).
+            'rank_tracked_keywords' => 20,
+            'rank_spend_usd_per_day' => 0.25,
         ],
         'growth' => [
             'label' => 'Growth',
@@ -36,6 +42,9 @@ return [
             // Daily ceiling on paid keyword-data lookups (USD). 0 = seeds only, nothing measured.
             'keyword_spend_usd_per_day' => 2.00,
             'content_generations_per_day' => 100,
+            // Tracked keywords whose live search position we check weekly, and the daily spend ceiling for it (USD).
+            'rank_tracked_keywords' => 100,
+            'rank_spend_usd_per_day' => 1.00,
         ],
         'agency' => [
             'label' => 'Agency',
@@ -46,6 +55,9 @@ return [
             // Daily ceiling on paid keyword-data lookups (USD). 0 = seeds only, nothing measured.
             'keyword_spend_usd_per_day' => 10.00,
             'content_generations_per_day' => 500,
+            // Tracked keywords whose live search position we check weekly, and the daily spend ceiling for it (USD).
+            'rank_tracked_keywords' => 500,
+            'rank_spend_usd_per_day' => 5.00,
         ],
     ],
 
@@ -79,6 +91,16 @@ return [
         'lag_days' => 3,
         'max_rows' => 25000,
         'max_pages' => 4,
+    ],
+
+    'rankings' => [
+        // dataforseo, or empty for "not measured". Defaults to the keyword provider so one account covers both.
+        'provider' => env('FINDRIVA_SERP_PROVIDER', env('FINDRIVA_KEYWORD_PROVIDER')),
+        'device' => 'desktop',
+        'depth' => (int) env('FINDRIVA_SERP_DEPTH', 30),
+        'recheck_days' => 7,
+        'manual_min_hours' => 20,
+        'estimated_cost_per_check' => (float) env('FINDRIVA_SERP_COST_ESTIMATE', 0.004),
     ],
 
     'indexnow' => [
