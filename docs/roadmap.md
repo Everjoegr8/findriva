@@ -40,7 +40,8 @@ These are the blueprint's "decisions to validate" (section 21), decided so the b
 | 3 | Weekly rank observations for tracked keywords, history and change, plan allowance and daily cap | Done |
 | 5 | Google Business Profile: connect, compare facts, daily actions, reviews inbox with approved replies | Done (live once Google approves Business Profile API access) |
 | 5 | AI answer visibility: customer questions asked to Claude with web search, named/cited tracking, sources it relies on | Done (live with `ANTHROPIC_API_KEY`) |
-| 5 | CMS connectors (WordPress, Shopify), local map grid | Planned |
+| 5 | Local map grid: Google Maps position from a 3x3 or 5x5 grid of points, who wins each point, monthly point allowance | Done (live once DataForSEO is funded) |
+| 5 | CMS connectors (WordPress, Shopify) | Planned |
 
 ## External integrations that need credentials or approval
 

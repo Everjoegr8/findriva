@@ -22,6 +22,8 @@ return [
             // Questions asked weekly to an AI assistant with web search, and the daily spend ceiling for it (USD).
             'ai_answer_questions' => 0,
             'ai_answer_spend_usd_per_day' => 0.00,
+            // Google Maps points checked per month in local grid scans (a 3x3 scan uses 9, a 5x5 uses 25).
+            'local_grid_points_per_month' => 0,
         ],
         'starter' => [
             'label' => 'Starter',
@@ -38,6 +40,8 @@ return [
             // Questions asked weekly to an AI assistant with web search, and the daily spend ceiling for it (USD).
             'ai_answer_questions' => 5,
             'ai_answer_spend_usd_per_day' => 0.50,
+            // Google Maps points checked per month in local grid scans (a 3x3 scan uses 9, a 5x5 uses 25).
+            'local_grid_points_per_month' => 100,
         ],
         'growth' => [
             'label' => 'Growth',
@@ -54,6 +58,8 @@ return [
             // Questions asked weekly to an AI assistant with web search, and the daily spend ceiling for it (USD).
             'ai_answer_questions' => 20,
             'ai_answer_spend_usd_per_day' => 2.00,
+            // Google Maps points checked per month in local grid scans (a 3x3 scan uses 9, a 5x5 uses 25).
+            'local_grid_points_per_month' => 500,
         ],
         'agency' => [
             'label' => 'Agency',
@@ -70,6 +76,8 @@ return [
             // Questions asked weekly to an AI assistant with web search, and the daily spend ceiling for it (USD).
             'ai_answer_questions' => 100,
             'ai_answer_spend_usd_per_day' => 10.00,
+            // Google Maps points checked per month in local grid scans (a 3x3 scan uses 9, a 5x5 uses 25).
+            'local_grid_points_per_month' => 2500,
         ],
     ],
 
@@ -113,6 +121,7 @@ return [
         'recheck_days' => 7,
         'manual_min_hours' => 20,
         'estimated_cost_per_check' => (float) env('FINDRIVA_SERP_COST_ESTIMATE', 0.004),
+        'estimated_cost_per_map_point' => (float) env('FINDRIVA_MAPS_COST_ESTIMATE', 0.004),
     ],
 
     'ai_answers' => [
