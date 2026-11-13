@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\Permission;
 use App\Http\Controllers\Controller;
+use App\Jobs\SyncBusinessProfile;
 use App\Jobs\SyncSearchConsole;
 use App\Models\Business;
 use App\Models\DomainProperty;
@@ -13,6 +14,8 @@ use App\Models\SearchPerformance;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Services\AuditLogger;
+use App\Services\Integrations\BusinessProfileImporter;
+use App\Services\Integrations\GoogleBusinessProfile;
 use App\Services\Integrations\GoogleSearchConsole;
 use App\Services\Integrations\IndexNow;
 use App\Services\Integrations\IntegrationException;
@@ -36,6 +39,8 @@ class IntegrationController extends Controller
         private readonly SearchConsoleImporter $importer,
         private readonly IndexNow $indexNow,
         private readonly AuditLogger $audit,
+        private readonly GoogleBusinessProfile $profile,
+        private readonly BusinessProfileImporter $profileImporter,
     ) {}
 
     public function index(Business $business): JsonResponse
@@ -49,6 +54,10 @@ class IntegrationController extends Controller
             'google_search_console' => [
                 'available' => $this->google->isConfigured(),
                 'connection' => $gsc ? $this->present($gsc) : null,
+            ],
+            'google_business_profile' => [
+                'available' => $this->profile->isConfigured(),
+                'connection' => ($gbp = IntegrationConnection::query()->where('business_id', $business->id)->where('provider', 'google_business_profile')->first()) ? $this->present($gbp) : null,
             ],
             'indexnow' => $domain ? [
                 'host' => $domain->canonical_host ?: $domain->domain,
@@ -73,9 +82,26 @@ class IntegrationController extends Controller
         $state = Str::random(48);
         Cache::put('oauth:google:'.hash('sha256', $state), [
             'user_id' => $request->user()->id, 'workspace_id' => $this->workspace()->id, 'business_id' => $business->id,
+            'provider' => 'google_search_console',
         ], now()->addMinutes(10));
 
         return response()->json(['data' => ['authorization_url' => $this->google->authorizationUrl($state)]]);
+    }
+
+    public function connectBusinessProfile(Request $request, Business $business): JsonResponse
+    {
+        $this->authorizePermission(Permission::ActionApprove);
+        $this->ensureInWorkspace($business);
+        if (! $this->profile->isConfigured()) {
+            throw ValidationException::withMessages(['google' => 'Google sign-in is not set up on this Findriva installation yet.']);
+        }
+        $state = Str::random(48);
+        Cache::put('oauth:google:'.hash('sha256', $state), [
+            'user_id' => $request->user()->id, 'workspace_id' => $this->workspace()->id, 'business_id' => $business->id,
+            'provider' => 'google_business_profile',
+        ], now()->addMinutes(10));
+
+        return response()->json(['data' => ['authorization_url' => $this->profile->authorizationUrl($state)]]);
     }
 
     /** Google redirects the browser here. There is no bearer token, so the one-time state is the proof. */
@@ -86,7 +112,8 @@ class IntegrationController extends Controller
         if (! $ctx) {
             return redirect()->away($app.'/?integration_error=expired');
         }
-        $back = $app.'/businesses/'.$ctx['business_id'].'/results';
+        $isProfile = ($ctx['provider'] ?? 'google_search_console') === 'google_business_profile';
+        $back = $app.'/businesses/'.$ctx['business_id'].($isProfile ? '/google-profile' : '/results');
         if ($request->filled('error') || ! $request->filled('code')) {
             return redirect()->away($back.'?integration_error=declined');
         }
@@ -95,6 +122,10 @@ class IntegrationController extends Controller
         $user = User::query()->findOrFail($ctx['user_id']);
         if (! $user->canIn($workspace, Permission::ActionApprove)) {
             return redirect()->away($back.'?integration_error=forbidden');
+        }
+
+        if ($isProfile) {
+            return $tenant->runAs($workspace, fn () => $this->finishBusinessProfile($request, $ctx, $user, $back));
         }
 
         return $tenant->runAs($workspace, function () use ($request, $ctx, $user, $back) {
@@ -131,11 +162,56 @@ class IntegrationController extends Controller
         });
     }
 
+    private function finishBusinessProfile(Request $request, array $ctx, User $user, string $back): RedirectResponse
+    {
+        $business = Business::query()->findOrFail($ctx['business_id']);
+        try {
+            $token = $this->profile->exchangeCode((string) $request->query('code'));
+            $granted = explode(' ', (string) ($token['scope'] ?? ''));
+            if (! in_array($this->profile->scope(), $granted, true)) {
+                return redirect()->away($back.'?integration_error=scope');
+            }
+            $c = IntegrationConnection::query()->firstOrNew(['business_id' => $business->id, 'provider' => 'google_business_profile']);
+            $c->fill([
+                'connected_by' => $user->id,
+                'access_token' => $token['access_token'],
+                'refresh_token' => $token['refresh_token'] ?? $c->refresh_token,
+                'token_expires_at' => now()->addSeconds((int) ($token['expires_in'] ?? 3600)),
+                'scopes' => $granted,
+                'account_email' => $this->profile->accountEmail($token['access_token']),
+                'last_error' => null,
+            ])->save();
+            $locations = $this->profile->locations($c);
+            $location = $this->profileImporter->matchLocation($locations, $business);
+            $c->update(['available_properties' => $locations, 'property' => $location, 'status' => $location ? 'connected' : 'needs_property']);
+        } catch (IntegrationException) {
+            return redirect()->away($back.'?integration_error=google');
+        }
+        $this->audit->log('integration.connected', $c, null, ['provider' => 'google_business_profile', 'location' => $location, 'account' => $c->account_email]);
+        if ($location) {
+            SyncBusinessProfile::dispatch($c->workspace_id, $c->id);
+        }
+
+        return redirect()->away($back.'?connected=google_business_profile');
+    }
+
     public function selectProperty(Request $request, Business $business, IntegrationConnection $connection): JsonResponse
     {
         $this->authorizePermission(Permission::ActionApprove);
         $this->ensureBelongs($connection, $business);
         $data = $request->validate(['property' => ['required', 'string', 'max:255']]);
+        if ($connection->provider === 'google_business_profile') {
+            if (! collect($connection->available_properties ?? [])->contains('name', $data['property'])) {
+                throw ValidationException::withMessages(['property' => 'Choose one of the locations this Google account manages.']);
+            }
+            $connection->update(['property' => $data['property'], 'status' => 'connected', 'data_through' => null, 'profile_snapshot' => null]);
+            $connection->reviews()->delete();
+            $connection->metrics()->delete();
+            SyncBusinessProfile::dispatch($connection->workspace_id, $connection->id);
+            $this->audit->log('integration.property_selected', $connection, null, ['location' => $data['property']]);
+
+            return response()->json(['data' => $this->present($connection->fresh())]);
+        }
         if (! collect($connection->available_properties ?? [])->contains('site_url', $data['property'])) {
             throw ValidationException::withMessages(['property' => 'Choose one of the properties this Google account can see.']);
         }
@@ -153,9 +229,11 @@ class IntegrationController extends Controller
         $this->authorizePermission(Permission::AuditRun);
         $this->ensureBelongs($connection, $business);
         if (! $connection->property || $connection->status === 'revoked') {
-            throw ValidationException::withMessages(['connection' => 'Reconnect Google Search Console first.']);
+            throw ValidationException::withMessages(['connection' => 'Reconnect Google first.']);
         }
-        SyncSearchConsole::dispatch($connection->workspace_id, $connection->id);
+        $connection->provider === 'google_business_profile'
+            ? SyncBusinessProfile::dispatch($connection->workspace_id, $connection->id)
+            : SyncSearchConsole::dispatch($connection->workspace_id, $connection->id);
 
         return response()->json(['data' => ['queued' => true]], 202);
     }
@@ -164,7 +242,12 @@ class IntegrationController extends Controller
     {
         $this->authorizePermission(Permission::ActionApprove);
         $this->ensureBelongs($connection, $business);
-        $this->google->revoke($connection);
+        // Google revokes the whole grant for this Google account, so keep it while another connection still uses it.
+        $shared = IntegrationConnection::query()->withoutGlobalScopes()->where('id', '!=', $connection->id)
+            ->where('account_email', $connection->account_email)->whereNotNull('account_email')->where('status', '!=', 'revoked')->exists();
+        if (! $shared) {
+            $this->google->revoke($connection);
+        }
         $this->audit->log('integration.disconnected', $connection, null, ['provider' => $connection->provider, 'property' => $connection->property]);
         // Deleting the connection also deletes the data imported through it.
         $connection->delete();
@@ -215,9 +298,11 @@ class IntegrationController extends Controller
     private function present(IntegrationConnection $c): array
     {
         return [
-            'id' => $c->id, 'status' => $c->status, 'account_email' => $c->account_email, 'property' => $c->property,
+            'id' => $c->id, 'provider' => $c->provider, 'status' => $c->status, 'account_email' => $c->account_email, 'property' => $c->property,
             'available_properties' => $c->available_properties ?? [], 'last_synced_at' => $c->last_synced_at?->toIso8601String(),
-            'data_through' => $c->data_through?->toDateString(), 'last_error' => $c->last_error, 'read_only' => true,
+            'data_through' => $c->data_through?->toDateString(), 'last_error' => $c->last_error,
+            // Business Profile can also post review replies, and only after an owner or admin approves each one.
+            'read_only' => $c->provider === 'google_search_console',
         ];
     }
 }

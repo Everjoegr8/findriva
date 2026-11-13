@@ -91,7 +91,8 @@ class ClaimChecker
             }
         }
 
-        $max = ContentTypes::get($type)['max_chars'];
+        // Types outside Content Studio (for example review replies) check their own length.
+        $max = ContentTypes::TYPES[$type]['max_chars'] ?? PHP_INT_MAX;
         if (mb_strlen($body) > $max) {
             $flag('block', 'too_long', mb_strlen($body).' characters', "This is longer than the {$max} characters allowed here.");
         }

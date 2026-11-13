@@ -103,6 +103,16 @@ return [
         'estimated_cost_per_check' => (float) env('FINDRIVA_SERP_COST_ESTIMATE', 0.004),
     ],
 
+    'business_profile' => [
+        'scope' => 'https://www.googleapis.com/auth/business.manage',
+        'backfill_days' => 90,
+        // Performance data settles a few days late; re-read the most recent days on each sync.
+        'lag_days' => 3,
+        'reread_days' => 7,
+        'review_pages' => 10,
+        'reply_max_length' => 4000,
+    ],
+
     'indexnow' => [
         'endpoint' => env('INDEXNOW_ENDPOINT', 'https://api.indexnow.org/indexnow'),
         // Findriva's own key, for public business pages on our domain. Empty = do not submit.

@@ -134,12 +134,19 @@ Claim flags: `block` (placeholders, unknown phone/email/link/price, ranking prom
 | GET | `/businesses/{id}/integrations` | Search Console connection (never tokens), IndexNow key state, domain verification |
 | POST | `/businesses/{id}/integrations/google/connect` | owner/admin; returns `authorization_url` (scope `webmasters.readonly`, offline access) |
 | GET | `/integrations/google/callback` | public; Google redirects here. One-time `state` (10 min) proves who started it; redirects to the dashboard |
-| PATCH | `/businesses/{id}/integrations/{connectionId}` | `property` from `available_properties` (owner/admin) |
+| POST | `/businesses/{id}/integrations/google-business/connect` | owner/admin, verified email; Business Profile (`business.manage`, the only scope Google offers) |
+| PATCH | `/businesses/{id}/integrations/{connectionId}` | `property` from `available_properties` (owner/admin); for Business Profile a location `accounts/{a}/locations/{l}`, which resets imported reviews and actions |
 | POST | `/businesses/{id}/integrations/{connectionId}/sync` | queue an import (also runs nightly at 04:30) |
 | DELETE | `/businesses/{id}/integrations/{connectionId}` | revokes the grant at Google and deletes imported data |
 | POST | `/businesses/{id}/indexnow/key` | create the per-site key; returns the file name and content |
 | POST | `/businesses/{id}/indexnow/verify` | re-fetches the key file from the site (SSRF-safe) |
 | POST | `/businesses/{id}/indexnow/submit` | owner/admin; `urls?` (same host only), default = indexable pages from the last audit |
+| GET | `/businesses/{id}/google-profile` | `?days=7\|28\|90`; connection, what the profile shows, `differences` from Findriva facts, profile actions (calls, directions, website clicks, chats, Search and Maps views) vs previous period, review summary |
+| GET | `/businesses/{id}/reviews` | `?filter=all\|unanswered\|awaiting_approval\|low` |
+| GET | `/businesses/{id}/reviews/{reviewId}/suggestion` | a short reply built from the review and the business's own facts, with claim-check flags |
+| PATCH | `/businesses/{id}/reviews/{reviewId}` | `reply` saves a draft (editor); refused while waiting for approval |
+| POST | `/businesses/{id}/reviews/{reviewId}/submit` | → `awaiting_approval`; refused while blocking flags remain |
+| POST | `/businesses/{id}/reviews/{reviewId}/decision` | owner/admin, verified email. `approve` posts exactly the approved text to Google (502 + `failed` if Google refuses; approve again to retry); `reject` sends it back |
 | GET | `/businesses/{id}/rankings` | tracked keywords with latest live position, change vs previous check, 120-day history, page-one results; `summary`, `method` (provider, market, device, depth, cadence), `allowance`, `last_run` |
 | POST | `/businesses/{id}/rankings/check` | queue a check (202). Skips keywords checked in the last 20 hours; weekly run Mondays 05:00 |
 | GET | `/businesses/{id}/competitors` | `?kind=business\|platform&status=suggested\|tracked\|dismissed\|all`; each with shared keywords, best/average position and head-to-head per keyword |
@@ -147,6 +154,11 @@ Claim flags: `block` (placeholders, unknown phone/email/link/price, ranking prom
 | PATCH | `/businesses/{id}/competitors/{competitorId}` | `status`, `kind`, `name` |
 | GET | `/businesses/{id}/performance` | `?days=7\|28\|90`; totals vs previous period, top searches/pages, tracked keywords' measured positions |
 | GET | `/businesses/{id}/report` | `?month=YYYY-MM`; counted and measured figures only, with a `not_measured` list |
+
+Business Profile imports run nightly at 04:45: profile facts, up to 500 newest reviews, and 90 days of daily actions
+(Google leaves out zero days; they are stored as zero, ending 3 days ago). A reply written in Google's own app counts as
+answered. Disconnecting deletes imported data and revokes the Google grant unless another connection uses the same
+Google account.
 
 Live positions come from a licensed provider (DataForSEO Google organic, country level, desktop, top 30). `position` is
 the organic rank of the business's own site (any subdomain) or its exact profile URLs (for example its Instagram
