@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Services\AiVisibility\AnswerEngine;
+use App\Services\AiVisibility\ClaudeAnswerEngine;
+use App\Services\AiVisibility\NullAnswerEngine;
 use App\Services\Content\ClaudeContentGenerator;
 use App\Services\Content\ContentGenerator;
 use App\Services\Content\TemplateContentGenerator;
@@ -34,6 +37,9 @@ class AppServiceProvider extends ServiceProvider
             'dataforseo' => new DataForSeoSerpProvider((array) config('findriva.keywords.dataforseo') + ['estimated_cost_per_check' => config('findriva.rankings.estimated_cost_per_check')]),
             default => new NullSerpProvider,
         });
+        $this->app->bind(AnswerEngine::class, fn () => config('findriva.ai_answers.engine') === 'claude' && filled(config('services.anthropic.key'))
+            ? new ClaudeAnswerEngine((string) config('services.anthropic.key'), (array) config('findriva.ai_answers'))
+            : new NullAnswerEngine);
         $this->app->bind(ContentGenerator::class, fn ($app) => config('findriva.content.generator') === 'claude' && filled(config('services.anthropic.key'))
             ? new ClaudeContentGenerator((string) config('services.anthropic.key'), (string) config('findriva.content.claude_model'))
             : $app->make(TemplateContentGenerator::class));

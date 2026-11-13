@@ -1,8 +1,10 @@
 <?php
 
+use App\Jobs\CheckAiAnswers;
 use App\Jobs\CheckRankings;
 use App\Jobs\SyncBusinessProfile;
 use App\Jobs\SyncSearchConsole;
+use App\Models\AiQuestion;
 use App\Models\IntegrationConnection;
 use App\Models\Keyword;
 use App\Services\Billing\BillingService;
@@ -36,3 +38,9 @@ Schedule::call(function () {
     Keyword::withoutGlobalScopes()->where('status', 'tracked')->select('workspace_id', 'business_id')->distinct()
         ->get()->each(fn ($k) => CheckRankings::dispatch($k->workspace_id, $k->business_id, true));
 })->weeklyOn(1, '05:00')->name('check-rankings')->onOneServer();
+
+// Weekly AI answer check for each business's questions (Wednesdays).
+Schedule::call(function () {
+    AiQuestion::withoutGlobalScopes()->where('active', true)->select('workspace_id', 'business_id')->distinct()
+        ->get()->each(fn ($q) => CheckAiAnswers::dispatch($q->workspace_id, $q->business_id, true));
+})->weeklyOn(3, '05:00')->name('check-ai-answers')->onOneServer();

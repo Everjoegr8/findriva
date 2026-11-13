@@ -39,7 +39,8 @@ These are the blueprint's "decisions to validate" (section 21), decided so the b
 | 3 | Results page and monthly report (print/PDF) from measured data | Done |
 | 3 | Weekly rank observations for tracked keywords, history and change, plan allowance and daily cap | Done |
 | 5 | Google Business Profile: connect, compare facts, daily actions, reviews inbox with approved replies | Done (live once Google approves Business Profile API access) |
-| 5 | CMS connectors (WordPress, Shopify), local grid, AI answer visibility | Planned |
+| 5 | AI answer visibility: customer questions asked to Claude with web search, named/cited tracking, sources it relies on | Done (live with `ANTHROPIC_API_KEY`) |
+| 5 | CMS connectors (WordPress, Shopify), local map grid | Planned |
 
 ## External integrations that need credentials or approval
 
@@ -74,7 +75,8 @@ See `backend/.env.example`. Findriva-specific:
 | `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD` | empty | DataForSEO API credentials |
 | `FINDRIVA_CONTENT_GENERATOR` | `template` | `claude` to let Claude polish drafts (needs `ANTHROPIC_API_KEY`) |
 | `FINDRIVA_CLAUDE_MODEL` | `claude-opus-5-5` | Model for AI drafts; server-side refusal fallbacks are on |
-| `ANTHROPIC_API_KEY` | empty | Anthropic API key (optional) |
+| `ANTHROPIC_API_KEY` | empty | Anthropic API key (optional; Content Studio polish and AI answer checks) |
+| `FINDRIVA_AI_ANSWER_ENGINE`, `FINDRIVA_AI_ANSWER_MODEL` | `claude`, `claude-opus-5-5` | Assistant used for AI answer checks; empty engine turns them off |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | empty | Google OAuth client for Search Console |
 | `GOOGLE_REDIRECT_URI` | `APP_URL/api/v1/integrations/google/callback` | Must match the OAuth client exactly |
 | `FINDRIVA_APP_URL` | `APP_URL` | Dashboard URL to return to after connecting |
