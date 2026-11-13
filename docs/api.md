@@ -140,8 +140,19 @@ Claim flags: `block` (placeholders, unknown phone/email/link/price, ranking prom
 | POST | `/businesses/{id}/indexnow/key` | create the per-site key; returns the file name and content |
 | POST | `/businesses/{id}/indexnow/verify` | re-fetches the key file from the site (SSRF-safe) |
 | POST | `/businesses/{id}/indexnow/submit` | owner/admin; `urls?` (same host only), default = indexable pages from the last audit |
+| GET | `/businesses/{id}/rankings` | tracked keywords with latest live position, change vs previous check, 120-day history, page-one results; `summary`, `method` (provider, market, device, depth, cadence), `allowance`, `last_run` |
+| POST | `/businesses/{id}/rankings/check` | queue a check (202). Skips keywords checked in the last 20 hours; weekly run Mondays 05:00 |
+| GET | `/businesses/{id}/competitors` | `?kind=business\|platform&status=suggested\|tracked\|dismissed\|all`; each with shared keywords, best/average position and head-to-head per keyword |
+| POST | `/businesses/{id}/competitors` | `domain, name?` add one you know (tracked) |
+| PATCH | `/businesses/{id}/competitors/{competitorId}` | `status`, `kind`, `name` |
 | GET | `/businesses/{id}/performance` | `?days=7\|28\|90`; totals vs previous period, top searches/pages, tracked keywords' measured positions |
 | GET | `/businesses/{id}/report` | `?month=YYYY-MM`; counted and measured figures only, with a `not_measured` list |
+
+Live positions come from a licensed provider (DataForSEO Google organic, country level, desktop, top 30). `position` is
+the organic rank of the business's own site (any subdomain) or its exact profile URLs (for example its Instagram
+profile or Findriva public page); `null` means not found within the depth, never an estimate. Checks are limited by
+the plan's `rank_tracked_keywords` (most-searched first) and `rank_spend_usd_per_day`. Social networks, directories and
+marketplaces are labelled `platform`, not competitors.
 
 Imports only finished days (`dataState: final`, 3-day lag), stores daily totals separately from query/page rows
 (Google hides some queries, so they never add up), and re-reads the last two days each sync. Owning the matching
