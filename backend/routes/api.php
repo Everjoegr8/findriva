@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\AccountController;
 use App\Http\Controllers\Api\V1\ActionController;
 use App\Http\Controllers\Api\V1\Admin\AdminController;
+use App\Http\Controllers\Api\V1\AiAnswerController;
 use App\Http\Controllers\Api\V1\AuditController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BillingController;
@@ -123,6 +124,13 @@ Route::prefix('v1')->group(function () {
                 Route::patch('reviews/{review}', [BusinessProfileController::class, 'saveReply']);
                 Route::post('reviews/{review}/submit', [BusinessProfileController::class, 'submitReply']);
                 Route::post('reviews/{review}/decision', [BusinessProfileController::class, 'decideReply'])->middleware('verified');
+
+                Route::get('ai-answers', [AiAnswerController::class, 'index']);
+                Route::post('ai-answers/check', [AiAnswerController::class, 'check'])->middleware('throttle:research');
+                Route::post('ai-questions/suggest', [AiAnswerController::class, 'suggest']);
+                Route::post('ai-questions', [AiAnswerController::class, 'store']);
+                Route::patch('ai-questions/{question}', [AiAnswerController::class, 'update']);
+                Route::delete('ai-questions/{question}', [AiAnswerController::class, 'destroy']);
 
                 Route::get('rankings', [RankingController::class, 'index']);
                 Route::post('rankings/check', [RankingController::class, 'check'])->middleware('throttle:research');

@@ -19,6 +19,9 @@ return [
             // Tracked keywords whose live search position we check weekly, and the daily spend ceiling for it (USD).
             'rank_tracked_keywords' => 0,
             'rank_spend_usd_per_day' => 0.00,
+            // Questions asked weekly to an AI assistant with web search, and the daily spend ceiling for it (USD).
+            'ai_answer_questions' => 0,
+            'ai_answer_spend_usd_per_day' => 0.00,
         ],
         'starter' => [
             'label' => 'Starter',
@@ -32,6 +35,9 @@ return [
             // Tracked keywords whose live search position we check weekly, and the daily spend ceiling for it (USD).
             'rank_tracked_keywords' => 20,
             'rank_spend_usd_per_day' => 0.25,
+            // Questions asked weekly to an AI assistant with web search, and the daily spend ceiling for it (USD).
+            'ai_answer_questions' => 5,
+            'ai_answer_spend_usd_per_day' => 0.50,
         ],
         'growth' => [
             'label' => 'Growth',
@@ -45,6 +51,9 @@ return [
             // Tracked keywords whose live search position we check weekly, and the daily spend ceiling for it (USD).
             'rank_tracked_keywords' => 100,
             'rank_spend_usd_per_day' => 1.00,
+            // Questions asked weekly to an AI assistant with web search, and the daily spend ceiling for it (USD).
+            'ai_answer_questions' => 20,
+            'ai_answer_spend_usd_per_day' => 2.00,
         ],
         'agency' => [
             'label' => 'Agency',
@@ -58,6 +67,9 @@ return [
             // Tracked keywords whose live search position we check weekly, and the daily spend ceiling for it (USD).
             'rank_tracked_keywords' => 500,
             'rank_spend_usd_per_day' => 5.00,
+            // Questions asked weekly to an AI assistant with web search, and the daily spend ceiling for it (USD).
+            'ai_answer_questions' => 100,
+            'ai_answer_spend_usd_per_day' => 10.00,
         ],
     ],
 
@@ -101,6 +113,18 @@ return [
         'recheck_days' => 7,
         'manual_min_hours' => 20,
         'estimated_cost_per_check' => (float) env('FINDRIVA_SERP_COST_ESTIMATE', 0.004),
+    ],
+
+    'ai_answers' => [
+        // claude (needs ANTHROPIC_API_KEY), or empty to switch AI answer checks off.
+        'engine' => env('FINDRIVA_AI_ANSWER_ENGINE', 'claude'),
+        'model' => env('FINDRIVA_AI_ANSWER_MODEL', 'claude-opus-5-5'),
+        'max_searches' => 3,
+        // List prices used to record what each answer cost (USD).
+        'input_usd_per_mtok' => (float) env('FINDRIVA_AI_ANSWER_INPUT_PRICE', 4.0),
+        'output_usd_per_mtok' => (float) env('FINDRIVA_AI_ANSWER_OUTPUT_PRICE', 20.0),
+        'search_usd_each' => 0.01,
+        'estimated_cost' => (float) env('FINDRIVA_AI_ANSWER_COST_ESTIMATE', 0.08),
     ],
 
     'business_profile' => [

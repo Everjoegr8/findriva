@@ -147,6 +147,11 @@ Claim flags: `block` (placeholders, unknown phone/email/link/price, ranking prom
 | PATCH | `/businesses/{id}/reviews/{reviewId}` | `reply` saves a draft (editor); refused while waiting for approval |
 | POST | `/businesses/{id}/reviews/{reviewId}/submit` | → `awaiting_approval`; refused while blocking flags remain |
 | POST | `/businesses/{id}/reviews/{reviewId}/decision` | owner/admin, verified email. `approve` posts exactly the approved text to Google (502 + `failed` if Google refuses; approve again to retry); `reject` sends it back |
+| GET | `/businesses/{id}/ai-answers` | questions with the latest answer: `named`, `own_site_cited`, `excerpt`, full `answer`, `sources` (`kind`: own, platform, other; `cited`), history; `summary`, `often_cited`, `engine`, `location`, `allowance`, `last_run` |
+| POST | `/businesses/{id}/ai-answers/check` | queue a check (202). Skips questions asked in the last 20 hours; weekly run Wednesdays 05:00 |
+| POST | `/businesses/{id}/ai-questions/suggest` | questions from tracked, non-brand keywords |
+| POST | `/businesses/{id}/ai-questions` | `question` (8-300 chars). 422 if it contains the business name or an alias |
+| PATCH/DELETE | `/businesses/{id}/ai-questions/{questionId}` | `active` |
 | GET | `/businesses/{id}/rankings` | tracked keywords with latest live position, change vs previous check, 120-day history, page-one results; `summary`, `method` (provider, market, device, depth, cadence), `allowance`, `last_run` |
 | POST | `/businesses/{id}/rankings/check` | queue a check (202). Skips keywords checked in the last 20 hours; weekly run Mondays 05:00 |
 | GET | `/businesses/{id}/competitors` | `?kind=business\|platform&status=suggested\|tracked\|dismissed\|all`; each with shared keywords, best/average position and head-to-head per keyword |
@@ -159,6 +164,12 @@ Business Profile imports run nightly at 04:45: profile facts, up to 500 newest r
 (Google leaves out zero days; they are stored as zero, ending 3 days ago). A reply written in Google's own app counts as
 answered. Disconnecting deletes imported data and revokes the Google grant unless another connection uses the same
 Google account.
+
+AI answers: the question is sent to Claude with live web search and an approximate location (the business's city),
+without the business name. "Named" means the business name or an alias appears in the answer; "own site cited" means a
+cited source is its own site or exact profile URL. One answer is one snapshot from one assistant. Limited per plan by
+`ai_answer_questions` (0 / 5 / 20 / 100) and `ai_answer_spend_usd_per_day` (0 / 0.50 / 2.00 / 10.00); each answer's cost is
+recorded from token usage and searches.
 
 Live positions come from a licensed provider (DataForSEO Google organic, country level, desktop, top 30). `position` is
 the organic rank of the business's own site (any subdomain) or its exact profile URLs (for example its Instagram
