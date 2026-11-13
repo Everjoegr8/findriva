@@ -136,3 +136,10 @@ pre.code { background: var(--surface-2); border: 1px solid var(--border); border
 .check-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; }
 .check-list li::before { content: '○ '; color: var(--muted); }
 .check-list li.ok::before { content: '✓ '; color: var(--ok); }
+
+@media print {
+  .sidebar, .tabs, .no-print, header.page-head { display: none !important; }
+  .shell { display: block; }
+  body, .card { background: #fff !important; color: #000 !important; box-shadow: none !important; }
+  .report { border: none; }
+}

@@ -107,6 +107,6 @@ export interface Overview {
   website: null | { url: string; last_audit: Partial<CrawlRun> | null; open_issues_by_severity: Record<string, number> }
   profiles: { registered: number; reachable: number; by_platform: Record<string, number> }
   actions: { open: number; awaiting_approval: number; done_unverified: number; verified: number }
-  search_engine_data: Record<string, { status: string; note?: string }>
+  search_engine_data: Record<string, { status: string; note?: string; property?: string | null; data_through?: string | null; last_28_days?: { clicks: number; impressions: number } }>
   open_issues_by_category: Record<string, number>
 }

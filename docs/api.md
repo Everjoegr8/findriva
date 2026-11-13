@@ -99,6 +99,26 @@ measured row records `metrics_provider` and `metrics_retrieved_at`.
 Claim flags: `block` (placeholders, unknown phone/email/link/price, ranking promises, too long, Google policy) and `warn`
 (numbers or superlatives not in the facts).
 
+## Integrations and results
+| Method | Path | Notes |
+| --- | --- | --- |
+| GET | `/businesses/{id}/integrations` | Search Console connection (never tokens), IndexNow key state, domain verification |
+| POST | `/businesses/{id}/integrations/google/connect` | owner/admin; returns `authorization_url` (scope `webmasters.readonly`, offline access) |
+| GET | `/integrations/google/callback` | public; Google redirects here. One-time `state` (10 min) proves who started it; redirects to the dashboard |
+| PATCH | `/businesses/{id}/integrations/{connectionId}` | `property` from `available_properties` (owner/admin) |
+| POST | `/businesses/{id}/integrations/{connectionId}/sync` | queue an import (also runs nightly at 04:30) |
+| DELETE | `/businesses/{id}/integrations/{connectionId}` | revokes the grant at Google and deletes imported data |
+| POST | `/businesses/{id}/indexnow/key` | create the per-site key; returns the file name and content |
+| POST | `/businesses/{id}/indexnow/verify` | re-fetches the key file from the site (SSRF-safe) |
+| POST | `/businesses/{id}/indexnow/submit` | owner/admin; `urls?` (same host only), default = indexable pages from the last audit |
+| GET | `/businesses/{id}/performance` | `?days=7\|28\|90`; totals vs previous period, top searches/pages, tracked keywords' measured positions |
+| GET | `/businesses/{id}/report` | `?month=YYYY-MM`; counted and measured figures only, with a `not_measured` list |
+
+Imports only finished days (`dataState: final`, 3-day lag), stores daily totals separately from query/page rows
+(Google hides some queries, so they never add up), and re-reads the last two days each sync. Owning the matching
+Search Console property marks the domain verified (`verification_method: google_search_console`). Published public
+pages are announced to IndexNow with `FINDRIVA_INDEXNOW_KEY` when it is set.
+
 ## Operations (platform staff)
 `GET /admin/stats`, `GET /admin/workspaces`, `PATCH /admin/workspaces/{id}` (`plan, billing_status`),
 `GET /admin/crawl-runs?status=`, `GET /admin/audit-logs?workspace_id=&action=`.

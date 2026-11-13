@@ -36,6 +36,13 @@ return [
     ],
 
     // Optional: AI drafting in the Content Studio (FINDRIVA_CONTENT_GENERATOR=claude).
+    // Google Search Console (read-only). Redirect: https://app.findriva.com/api/v1/integrations/google/callback
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI', rtrim((string) env('APP_URL', 'http://localhost'), '/').'/api/v1/integrations/google/callback'),
+    ],
+
     'anthropic' => [
         'key' => env('ANTHROPIC_API_KEY'),
     ],

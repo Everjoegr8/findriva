@@ -78,7 +78,7 @@ export default function OverviewTab({ detail }: { detail: BusinessDetail }) {
         <table>
           <tbody>
             {Object.entries(o.search_engine_data).map(([k, v]) => (
-              <tr key={k}><th>{humanize(k)}</th><td>{humanize(v.status)}</td><td className="small muted">{v.note}</td></tr>
+              <tr key={k}><th>{humanize(k)}</th><td>{humanize(v.status)}</td><td className="small muted">{v.last_28_days ? `${v.last_28_days.clicks.toLocaleString()} clicks and ${v.last_28_days.impressions.toLocaleString()} impressions in the 28 days to ${v.data_through}` : v.note}</td></tr>
             ))}
           </tbody>
         </table>

@@ -2,6 +2,7 @@
 
 namespace App\Services\Publishing;
 
+use App\Jobs\SubmitPublicPageToIndexNow;
 use App\Models\Business;
 use App\Models\User;
 use App\Services\AuditLogger;
@@ -54,6 +55,9 @@ class PublicPage
         $before = $business->only(['public_slug', 'is_published']);
         $business->update(['public_slug' => $slug, 'is_published' => true, 'published_at' => now(), 'published_by' => $by->id]);
         $this->audit->log('public_page.published', $business, $before, ['public_slug' => $slug, 'url' => self::url($business)]);
+        if (filled(config('findriva.indexnow.platform_key'))) {
+            SubmitPublicPageToIndexNow::dispatch($business->workspace_id, $business->id, self::url($business))->afterCommit();
+        }
 
         return $business;
     }

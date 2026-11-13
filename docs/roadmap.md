@@ -33,9 +33,11 @@ These are the blueprint's "decisions to validate" (section 21), decided so the b
 | 2 | Content Studio: drafts only from approved facts, claim checker, approvals, version history; optional Claude polishing | Done |
 | 2 | Generated fixes: robots.txt, sitemap.xml, LocalBusiness JSON-LD, Open Graph tags | Done |
 | 2 | Hosted one-page public page (server-rendered, quality gate, owner/admin publish) | Done |
-| 3 | Google Search Console OAuth (read) | Blocked on credentials |
-| 3 | Bing Webmaster + IndexNow | Blocked on credentials |
-| 3 | Rank observations via licensed provider; reports and export | Planned |
+| 3 | Google Search Console OAuth (read), nightly import, domain verification | Done (live once the Google OAuth client exists) |
+| 3 | IndexNow (Bing, Yandex, Naver, Seznam) with per-site key check | Done |
+| 3 | Bing Webmaster Tools API (reports) | Blocked on credentials |
+| 3 | Results page and monthly report (print/PDF) from measured data | Done |
+| 3 | Rank observations via licensed provider | Planned |
 | 5 | Google Business Profile API, CMS connectors (WordPress, Shopify), local grid, reviews, AI answer visibility | Planned |
 
 ## External integrations that need credentials or approval
@@ -72,6 +74,10 @@ See `backend/.env.example`. Findriva-specific:
 | `FINDRIVA_CONTENT_GENERATOR` | `template` | `claude` to let Claude polish drafts (needs `ANTHROPIC_API_KEY`) |
 | `FINDRIVA_CLAUDE_MODEL` | `claude-opus-5-5` | Model for AI drafts; server-side refusal fallbacks are on |
 | `ANTHROPIC_API_KEY` | empty | Anthropic API key (optional) |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | empty | Google OAuth client for Search Console |
+| `GOOGLE_REDIRECT_URI` | `APP_URL/api/v1/integrations/google/callback` | Must match the OAuth client exactly |
+| `FINDRIVA_APP_URL` | `APP_URL` | Dashboard URL to return to after connecting |
+| `FINDRIVA_INDEXNOW_KEY` | empty | Platform key for public pages; served at `/{key}.txt` |
 
 Daily limits per plan live in `backend/config/findriva.php`: `keyword_spend_usd_per_day` (free 0, starter 0.50,
 growth 2.00, agency 10.00) and `content_generations_per_day` (5 / 30 / 100 / 500).
