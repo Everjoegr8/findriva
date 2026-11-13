@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\CoverageController;
 use App\Http\Controllers\Api\V1\DigitalAssetController;
 use App\Http\Controllers\Api\V1\GrowthController;
 use App\Http\Controllers\Api\V1\IntegrationController;
+use App\Http\Controllers\Api\V1\LocalGridController;
 use App\Http\Controllers\Api\V1\RankingController;
 use App\Http\Controllers\Api\V1\ResultsController;
 use App\Http\Controllers\Api\V1\WorkspaceController;
@@ -131,6 +132,10 @@ Route::prefix('v1')->group(function () {
                 Route::post('ai-questions', [AiAnswerController::class, 'store']);
                 Route::patch('ai-questions/{question}', [AiAnswerController::class, 'update']);
                 Route::delete('ai-questions/{question}', [AiAnswerController::class, 'destroy']);
+
+                Route::get('local-grid', [LocalGridController::class, 'index']);
+                Route::post('local-grid', [LocalGridController::class, 'store'])->middleware('throttle:research');
+                Route::get('local-grid/{scan}', [LocalGridController::class, 'show']);
 
                 Route::get('rankings', [RankingController::class, 'index']);
                 Route::post('rankings/check', [RankingController::class, 'check'])->middleware('throttle:research');

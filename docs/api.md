@@ -157,6 +157,9 @@ Claim flags: `block` (placeholders, unknown phone/email/link/price, ranking prom
 | GET | `/businesses/{id}/competitors` | `?kind=business\|platform&status=suggested\|tracked\|dismissed\|all`; each with shared keywords, best/average position and head-to-head per keyword |
 | POST | `/businesses/{id}/competitors` | `domain, name?` add one you know (tracked) |
 | PATCH | `/businesses/{id}/competitors/{competitorId}` | `status`, `kind`, `name` |
+| GET | `/businesses/{id}/local-grid` | recent map grid scans (summary each), `locations` with a map position, tracked `keywords`, `provider`, monthly point `allowance` and use |
+| POST | `/businesses/{id}/local-grid` | `keyword` or `keyword_id`, `location_id` or `lat`+`lng`, `size` 3\|5, `spacing_km` 0.3-5. 202 and queued; 422 if no provider, no plan points left, or a scan is already running |
+| GET | `/businesses/{id}/local-grid/{scanId}` | one scan with every point (row 0 is north; `position` or null if not in the top 20; top 3 results) and `leaders` |
 | GET | `/businesses/{id}/performance` | `?days=7\|28\|90`; totals vs previous period, top searches/pages, tracked keywords' measured positions |
 | GET | `/businesses/{id}/report` | `?month=YYYY-MM`; counted and measured figures only, with a `not_measured` list |
 
@@ -170,6 +173,11 @@ without the business name. "Named" means the business name or an alias appears i
 cited source is its own site or exact profile URL. One answer is one snapshot from one assistant. Limited per plan by
 `ai_answer_questions` (0 / 5 / 20 / 100) and `ai_answer_spend_usd_per_day` (0 / 0.50 / 2.00 / 10.00); each answer's cost is
 recorded from token usage and searches.
+
+Map grid: one Google Maps search (DataForSEO Maps, mobile, top 20) is checked from each point of a 3x3 or 5x5 grid
+around a location. A result counts as the business when it links to its own site or profile, shares its phone number, or
+has exactly its name or an alias. Each point uses one of the plan's `local_grid_points_per_month` (0 / 100 / 500 / 2500); a failed
+scan stops at the first failed point, points not checked are not charged, and the scan is marked `partial`.
 
 Live positions come from a licensed provider (DataForSEO Google organic, country level, desktop, top 30). `position` is
 the organic rank of the business's own site (any subdomain) or its exact profile URLs (for example its Instagram

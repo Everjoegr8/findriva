@@ -14,6 +14,7 @@ import ContentTab from './business/Content'
 import PublicPageTab from './business/PublicPage'
 import ResultsTab from './business/Results'
 import RankingsTab from './business/Rankings'
+import MapGridTab from './business/MapGrid'
 import GoogleProfileTab from './business/GoogleProfile'
 import AiAnswersTab from './business/AiAnswers'
 
@@ -50,6 +51,7 @@ export default function BusinessPage() {
         <NavLink to={`${base}/fixes`}>Ready-made fixes</NavLink>
         <NavLink to={`${base}/keywords`}>Keywords</NavLink>
         <NavLink to={`${base}/rankings`}>Rankings &amp; competitors</NavLink>
+        <NavLink to={`${base}/map-grid`}>Map grid</NavLink>
         <NavLink to={`${base}/google-profile`}>Google profile &amp; reviews</NavLink>
         <NavLink to={`${base}/ai-answers`}>AI answers</NavLink>
         <NavLink to={`${base}/content`}>Content Studio</NavLink>
@@ -65,6 +67,7 @@ export default function BusinessPage() {
         <Route path="fixes" element={<FixesTab business={b} />} />
         <Route path="keywords" element={<KeywordsTab business={b} />} />
         <Route path="rankings" element={<RankingsTab business={b} />} />
+        <Route path="map-grid" element={<MapGridTab business={b} />} />
         <Route path="google-profile" element={<GoogleProfileTab business={b} />} />
         <Route path="ai-answers" element={<AiAnswersTab business={b} />} />
         <Route path="content" element={<ContentTab business={b} />} />

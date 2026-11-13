@@ -13,7 +13,10 @@ use App\Services\Crawler\HostResolver;
 use App\Services\Keywords\DataForSeoKeywordProvider;
 use App\Services\Keywords\KeywordResearchProvider;
 use App\Services\Keywords\NullKeywordProvider;
+use App\Services\Rankings\DataForSeoMapsProvider;
 use App\Services\Rankings\DataForSeoSerpProvider;
+use App\Services\Rankings\MapsProvider;
+use App\Services\Rankings\NullMapsProvider;
 use App\Services\Rankings\NullSerpProvider;
 use App\Services\Rankings\SerpProvider;
 use App\Support\Tenancy\CurrentWorkspace;
@@ -36,6 +39,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(SerpProvider::class, fn () => match (config('findriva.rankings.provider')) {
             'dataforseo' => new DataForSeoSerpProvider((array) config('findriva.keywords.dataforseo') + ['estimated_cost_per_check' => config('findriva.rankings.estimated_cost_per_check')]),
             default => new NullSerpProvider,
+        });
+        $this->app->bind(MapsProvider::class, fn () => match (config('findriva.rankings.provider')) {
+            'dataforseo' => new DataForSeoMapsProvider((array) config('findriva.keywords.dataforseo') + ['estimated_cost_per_point' => config('findriva.rankings.estimated_cost_per_map_point')]),
+            default => new NullMapsProvider,
         });
         $this->app->bind(AnswerEngine::class, fn () => config('findriva.ai_answers.engine') === 'claude' && filled(config('services.anthropic.key'))
             ? new ClaudeAnswerEngine((string) config('services.anthropic.key'), (array) config('findriva.ai_answers'))
