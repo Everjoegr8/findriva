@@ -1,0 +1,39 @@
+# Local development stack. Not a production deployment.
+services:
+  postgres:
+    image: postgres:16
+    environment: { POSTGRES_DB: findriva, POSTGRES_USER: findriva, POSTGRES_PASSWORD: findriva }
+    volumes: [pgdata:/var/lib/postgresql/data]
+    ports: ["5432:5432"]
+  redis:
+    image: redis:7
+  api: &api
+    build: ./backend
+    environment: &env
+      APP_ENV: local
+      APP_KEY: ${APP_KEY:?Set APP_KEY first, e.g. export APP_KEY=base64:$(openssl rand -base64 32)}
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_DATABASE: findriva
+      DB_USERNAME: findriva
+      DB_PASSWORD: findriva
+      QUEUE_CONNECTION: redis
+      CACHE_STORE: redis
+      REDIS_HOST: redis
+    command: sh -c "php artisan migrate --force --seed && php artisan serve --host=0.0.0.0 --port=8000"
+    ports: ["8000:8000"]
+    depends_on: [postgres, redis]
+  worker:
+    <<: *api
+    command: php artisan queue:work --queue=crawl,scan,default --tries=2
+    ports: []
+  web:
+    image: node:22
+    working_dir: /app
+    volumes: ["./frontend:/app"]
+    environment: { VITE_API_PROXY: "http://api:8000" }
+    command: sh -c "npm install && npx vite --host 0.0.0.0 --port 5173"
+    ports: ["5173:5173"]
+    depends_on: [api]
+volumes:
+  pgdata:
