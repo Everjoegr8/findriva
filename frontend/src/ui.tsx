@@ -27,6 +27,8 @@ const STATUS_LABEL: Record<string, [string, string]> = {
   in_progress: ['In progress', 'brand'], blocked: ['Blocked', 'high'], done: ['Done, checking', 'low'],
   verified: ['Verified', 'ok'], dismissed: ['Dismissed', ''], resolved: ['Resolved', 'ok'],
   queued: ['Queued', ''], running: ['Running', 'brand'], completed: ['Completed', 'ok'], failed: ['Failed', 'critical'], cancelled: ['Cancelled', ''],
+  draft: ['Draft', ''], in_review: ['Waiting for review', 'medium'], rejected: ['Changes requested', 'high'],
+  suggested: ['Suggested', ''], tracked: ['Tracking', 'brand'],
   ok: ['Reachable', 'ok'], limited: ['Limited (login wall)', 'medium'], unreachable: ['Unreachable', 'critical'], pending: ['Checking', ''],
 }
 export function StatusBadge({ status }: { status: string }) {

@@ -13,6 +13,9 @@ return [
             'locations_per_business' => 1,
             'pages_per_crawl' => 25,
             'crawls_per_month' => 4,
+            // Daily ceiling on paid keyword-data lookups (USD). 0 = seeds only, nothing measured.
+            'keyword_spend_usd_per_day' => 0.00,
+            'content_generations_per_day' => 5,
         ],
         'starter' => [
             'label' => 'Starter',
@@ -20,6 +23,9 @@ return [
             'locations_per_business' => 3,
             'pages_per_crawl' => 150,
             'crawls_per_month' => 30,
+            // Daily ceiling on paid keyword-data lookups (USD). 0 = seeds only, nothing measured.
+            'keyword_spend_usd_per_day' => 0.50,
+            'content_generations_per_day' => 30,
         ],
         'growth' => [
             'label' => 'Growth',
@@ -27,6 +33,9 @@ return [
             'locations_per_business' => 10,
             'pages_per_crawl' => 500,
             'crawls_per_month' => 120,
+            // Daily ceiling on paid keyword-data lookups (USD). 0 = seeds only, nothing measured.
+            'keyword_spend_usd_per_day' => 2.00,
+            'content_generations_per_day' => 100,
         ],
         'agency' => [
             'label' => 'Agency',
@@ -34,7 +43,34 @@ return [
             'locations_per_business' => 50,
             'pages_per_crawl' => 1000,
             'crawls_per_month' => 1000,
+            // Daily ceiling on paid keyword-data lookups (USD). 0 = seeds only, nothing measured.
+            'keyword_spend_usd_per_day' => 10.00,
+            'content_generations_per_day' => 500,
         ],
+    ],
+
+    // Base URL of public business pages (https://findriva.com/b/{slug}).
+    'public_url' => env('FINDRIVA_PUBLIC_URL', env('APP_URL', 'http://localhost')),
+
+    'keywords' => [
+        // dataforseo, or null for "seeds only". Volumes stay "not measured" without a provider.
+        'provider' => env('FINDRIVA_KEYWORD_PROVIDER'),
+        'cache_days' => 30,
+        'max_seeds' => 60,
+        'max_ideas' => 150,
+        'dataforseo' => [
+            'login' => env('DATAFORSEO_LOGIN'),
+            'password' => env('DATAFORSEO_PASSWORD'),
+            'base_url' => env('DATAFORSEO_BASE_URL', 'https://api.dataforseo.com'),
+            // Used for the spend cap before the provider reports the real cost.
+            'estimated_cost_per_request' => 0.075,
+        ],
+    ],
+
+    'content' => [
+        // template (facts only, no AI) or claude. Claude needs ANTHROPIC_API_KEY.
+        'generator' => env('FINDRIVA_CONTENT_GENERATOR', 'template'),
+        'claude_model' => env('FINDRIVA_CLAUDE_MODEL', 'claude-opus-5-5'),
     ],
 
     'crawler' => [
