@@ -52,6 +52,23 @@ return [
     // Base URL of public business pages (https://findriva.com/b/{slug}).
     'public_url' => env('FINDRIVA_PUBLIC_URL', env('APP_URL', 'http://localhost')),
 
+    // Monthly prices in kobo (NGN minor units). Plans buy coverage, never rankings.
+    'billing' => [
+        'currency' => 'NGN',
+        'prices' => [
+            'starter' => (int) env('FINDRIVA_PRICE_STARTER', 990000),   // ₦9,900
+            'growth' => (int) env('FINDRIVA_PRICE_GROWTH', 2990000),    // ₦29,900
+            'agency' => (int) env('FINDRIVA_PRICE_AGENCY', 9900000),    // ₦99,000
+        ],
+        // Paystack plan codes (PLN_...) turn a payment into a monthly subscription. Without them a payment buys 30 days.
+        'paystack_plans' => [
+            'starter' => env('PAYSTACK_PLAN_STARTER'),
+            'growth' => env('PAYSTACK_PLAN_GROWTH'),
+            'agency' => env('PAYSTACK_PLAN_AGENCY'),
+        ],
+        'grace_days' => 3,
+    ],
+
     // Where the dashboard lives, for redirects after connecting an account.
     'app_url' => env('FINDRIVA_APP_URL', env('APP_URL', 'http://localhost')),
 

@@ -10,7 +10,36 @@ Validation errors return 422 with `errors`; another tenant's records return 404.
 | POST | `/auth/register` | `name, email, password, workspace_name?, workspace_type? (business\|agency)` → token + user |
 | POST | `/auth/login` | `email, password` → token + user |
 | POST | `/auth/logout` | revokes current token |
-| GET | `/auth/me` | user + workspaces and roles |
+| GET | `/auth/me` | user (`email_verified`, `mfa_enabled`) + workspaces and roles |
+| POST | `/auth/mfa/challenge` | `challenge, code` (authenticator or recovery code) → token. Login returns `{mfa_required, challenge}` when MFA is on; challenges last 5 minutes and allow 5 tries |
+| POST | `/auth/password/forgot` | `email`; same answer whether or not the account exists |
+| POST | `/auth/password/reset` | `token, email, password, password_confirmation`; signs out every session |
+| GET | `/auth/email/verify/{id}/{hash}` | signed link from the email (48 h); redirects to the dashboard with `?verified=1\|invalid` |
+| POST | `/auth/email/resend` | resend the verification email (6 per hour) |
+
+Owner actions that reach outside Findriva (inviting members, publishing a page, connecting Google, paying) need a
+verified email.
+
+## Account security
+| Method | Path | Notes |
+| --- | --- | --- |
+| GET | `/account/security` | MFA state, recovery codes left |
+| POST | `/account/mfa/setup` | new pending secret + `otpauth_url` |
+| POST | `/account/mfa/confirm` | `code` → turns MFA on, returns 10 one-time recovery codes (stored hashed) |
+| POST | `/account/mfa/disable` | `password, code` |
+
+Codes are TOTP (RFC 6238, 30 s, ±1 step); a code cannot be used twice.
+
+## Billing
+| Method | Path | Notes |
+| --- | --- | --- |
+| GET | `/workspace/billing` | plan, status, period end, prices (kobo, NGN), `configured`, payment history |
+| POST | `/workspace/billing/checkout` | owner only, verified email. `plan` → Paystack `authorization_url` |
+| POST | `/workspace/billing/confirm` | `reference`; verifies with Paystack and activates the plan if amount and currency match |
+| POST | `/billing/paystack/webhook` | public; `x-paystack-signature` (HMAC-SHA512) required. Handles `charge.success`, `subscription.create`, `subscription.not_renew`, `subscription.disable`, `invoice.payment_failed`; each event is processed once |
+
+A paid month runs from payment; renewals extend from the current end. Plans lapse to free 3 days after the period
+ends without a renewal (checked daily at 02:00).
 
 ## Workspaces
 | Method | Path | Permission |

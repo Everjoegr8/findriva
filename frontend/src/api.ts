@@ -54,7 +54,7 @@ export async function api<T = unknown>(path: string, init: RequestInit & { json?
 
 export type Role = 'owner' | 'admin' | 'editor' | 'viewer'
 export interface WorkspaceSummary { id: number; name: string; type: string; plan: string; role: Role }
-export interface User { id: number; name: string; email: string; is_platform_admin: boolean; current_workspace_id: number | null; workspaces: WorkspaceSummary[] }
+export interface User { id: number; name: string; email: string; is_platform_admin: boolean; email_verified: boolean; mfa_enabled: boolean; current_workspace_id: number | null; workspaces: WorkspaceSummary[] }
 
 export interface Location {
   id: number; label: string | null; address_line1: string | null; city: string | null; region: string | null; country: string

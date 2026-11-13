@@ -1,7 +1,10 @@
 import { Navigate, NavLink, Outlet, Route, Routes } from 'react-router-dom'
 import { useAuth } from './auth'
 import { Spinner } from './ui'
-import { LoginPage, RegisterPage } from './pages/Auth'
+import { ForgotPasswordPage, LoginPage, RegisterPage, ResetPasswordPage } from './pages/Auth'
+import AccountPage from './pages/Account'
+import BillingPage from './pages/Billing'
+import { VerifyBanner } from './VerifyBanner'
 import BusinessesPage from './pages/Businesses'
 import OnboardingPage from './pages/Onboarding'
 import BusinessPage from './pages/Business'
@@ -22,6 +25,8 @@ function Shell() {
         <nav className="nav">
           <NavLink to="/" end>Businesses</NavLink>
           <NavLink to="/businesses/new">Add a business</NavLink>
+          <NavLink to="/billing">Plan and billing</NavLink>
+          <NavLink to="/account">Account security</NavLink>
           {user.is_platform_admin && <NavLink to="/admin">Operations</NavLink>}
         </nav>
         <div style={{ marginTop: 'auto' }} className="small muted">
@@ -29,7 +34,7 @@ function Shell() {
           <button className="btn ghost sm" onClick={() => void signOut()}>Sign out</button>
         </div>
       </aside>
-      <main className="main"><Outlet /></main>
+      <main className="main"><VerifyBanner /><Outlet /></main>
     </div>
   )
 }
@@ -41,11 +46,15 @@ export default function App() {
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <LoginPage />} />
       <Route path="/register" element={user ? <Navigate to="/" replace /> : <RegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route element={<Shell />}>
         <Route index element={<BusinessesPage />} />
         <Route path="/businesses/new" element={<OnboardingPage />} />
         <Route path="/businesses/:id/*" element={<BusinessPage />} />
         <Route path="/admin" element={<AdminPage />} />
+        <Route path="/billing" element={<BillingPage />} />
+        <Route path="/account" element={<AccountPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
