@@ -13,11 +13,11 @@ class Workspace extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['name', 'slug', 'type', 'plan', 'billing_status', 'settings'];
+    protected $fillable = ['name', 'slug', 'type', 'plan', 'billing_status', 'settings', 'billing_provider', 'billing_customer_code', 'billing_subscription_code', 'current_period_end', 'cancel_at_period_end'];
 
     protected function casts(): array
     {
-        return ['settings' => 'array'];
+        return ['settings' => 'array', 'current_period_end' => 'datetime', 'cancel_at_period_end' => 'boolean'];
     }
 
     protected static function booted(): void

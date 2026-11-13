@@ -25,8 +25,8 @@ These are the blueprint's "decisions to validate" (section 21), decided so the b
 | 1 | Identity checks and conflict detection | Done |
 | 1 | Action Centre with approvals and re-check verification | Done |
 | 1 | Coverage limits, usage events, operations console | Done |
-| 1 | Billing provider (Paystack/Flutterwave/Stripe) | Not started: needs a merchant account |
-| 1 | Email verification, password reset, MFA | Not started (schema has `mfa_enabled_at`) |
+| 1 | Billing provider: Paystack (NGN) checkout, verified webhooks, renewals, lapse after 3-day grace | Done (live once the Paystack account keys are set) |
+| 1 | Email verification, password reset, authenticator-app MFA with recovery codes | Done (emails send once Resend is configured) |
 | 2 | Keyword provider adapter (`KeywordResearchProvider`) + DataForSEO, 30-day cache, daily spend cap per workspace | Done (live data once the DataForSEO account is funded) |
 | 2 | Keyword clustering and intent labelling | Done |
 | 2 | SERP/competitor adapter | Next |
@@ -51,8 +51,8 @@ None of these are faked; the product shows "not connected" until they exist.
 | Bing Webmaster Tools | API key / OAuth app | Register app |
 | IndexNow | Per-site key file hosted on the customer domain | Generated per site in Phase 3 |
 | Keyword / SERP data | Licensed provider account (e.g. DataForSEO) and budget | Choose provider, fund account |
-| Billing | Paystack or Flutterwave (NGN) and/or Stripe | Merchant account |
-| Email | SMTP / transactional provider | Account and sending domain |
+| Billing | Paystack merchant account (live secret/public keys, webhook URL set to `/api/v1/billing/paystack/webhook`), optional plan codes | Activate Paystack business; add keys |
+| Email | Resend account and verified sending domain | Create account, add DNS records |
 | Object storage | S3-compatible bucket | For reports and media in Phase 2 |
 
 ## Environment variables
@@ -78,6 +78,10 @@ See `backend/.env.example`. Findriva-specific:
 | `GOOGLE_REDIRECT_URI` | `APP_URL/api/v1/integrations/google/callback` | Must match the OAuth client exactly |
 | `FINDRIVA_APP_URL` | `APP_URL` | Dashboard URL to return to after connecting |
 | `FINDRIVA_INDEXNOW_KEY` | empty | Platform key for public pages; served at `/{key}.txt` |
+| `MAIL_MAILER`, `RESEND_API_KEY`, `MAIL_FROM_ADDRESS` | `log` | `resend` in production; emails are written to the log until then |
+| `PAYSTACK_SECRET_KEY`, `PAYSTACK_PUBLIC_KEY` | empty | Paystack keys; checkout shows "not set up yet" without them |
+| `PAYSTACK_PLAN_STARTER/GROWTH/AGENCY` | empty | Optional plan codes for automatic renewal |
+| `FINDRIVA_PRICE_STARTER/GROWTH/AGENCY` | 990000 / 2990000 / 9900000 | Monthly price in kobo |
 
 Daily limits per plan live in `backend/config/findriva.php`: `keyword_spend_usd_per_day` (free 0, starter 0.50,
 growth 2.00, agency 10.00) and `content_generations_per_day` (5 / 30 / 100 / 500).

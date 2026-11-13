@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { api, type User } from '../api'
 import { useAuth } from '../auth'
 import { Field, fieldErrors } from '../ui'
@@ -23,26 +23,94 @@ export function LoginPage() {
   const { signIn } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [challenge, setChallenge] = useState<string | null>(null)
+  const [code, setCode] = useState('')
   const [error, setError] = useState<unknown>(null)
   const [busy, setBusy] = useState(false)
 
   async function submit(e: FormEvent) {
     e.preventDefault(); setBusy(true); setError(null)
     try {
-      const r = await api<{ token: string; user: User }>('/auth/login', { method: 'POST', json: { email, password } })
-      signIn(r.token, r.user)
-    } catch (err) { setError(err) } finally { setBusy(false) }
+      if (challenge) {
+        const r = await api<{ token: string; user: User }>('/auth/mfa/challenge', { method: 'POST', json: { challenge, code } })
+        signIn(r.token, r.user)
+        return
+      }
+      const r = await api<{ token?: string; user?: User; mfa_required?: boolean; challenge?: string }>('/auth/login', { method: 'POST', json: { email, password } })
+      if (r.mfa_required && r.challenge) setChallenge(r.challenge)
+      else if (r.token && r.user) signIn(r.token, r.user)
+    } catch (err) {
+      if (challenge && fieldErrors(err).challenge) { setChallenge(null); setCode('') }
+      setError(err)
+    } finally { setBusy(false) }
   }
   const errs = fieldErrors(error)
   return (
-    <AuthFrame title="Sign in">
+    <AuthFrame title={challenge ? 'Enter your code' : 'Sign in'}>
       <form className="stack" onSubmit={submit}>
-        <Field label="Email" error={errs.email}><input type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
-        <Field label="Password"><input type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} /></Field>
-        {error && !errs.email ? <p className="error-text">{(error as Error).message}</p> : null}
-        <button className="btn primary" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
-        <p className="small muted">New here? <Link to="/register">Create an account</Link></p>
+        {challenge ? (
+          <Field label="6-digit code from your authenticator app" hint="Lost your phone? Enter one of your recovery codes instead." error={errs.code}>
+            <input inputMode="numeric" autoComplete="one-time-code" autoFocus required value={code} onChange={(e) => setCode(e.target.value)} />
+          </Field>
+        ) : (
+          <>
+            <Field label="Email" error={errs.email}><input type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
+            <Field label="Password"><input type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} /></Field>
+          </>
+        )}
+        {error && !errs.email && !errs.code ? <p className="error-text">{errs.challenge?.[0] ?? (error as Error).message}</p> : null}
+        <button className="btn primary" disabled={busy}>{busy ? 'Checking…' : challenge ? 'Continue' : 'Sign in'}</button>
+        {!challenge && <p className="small muted"><Link to="/forgot-password">Forgot your password?</Link> · New here? <Link to="/register">Create an account</Link></p>}
       </form>
+    </AuthFrame>
+  )
+}
+
+export function ForgotPasswordPage() {
+  const [email, setEmail] = useState('')
+  const [sent, setSent] = useState<string | null>(null)
+  const [error, setError] = useState<unknown>(null)
+  async function submit(e: FormEvent) {
+    e.preventDefault(); setError(null)
+    try { setSent((await api<{ message: string }>('/auth/password/forgot', { method: 'POST', json: { email } })).message) } catch (err) { setError(err) }
+  }
+  return (
+    <AuthFrame title="Reset your password">
+      {sent ? <p className="notice">{sent}</p> : (
+        <form className="stack" onSubmit={submit}>
+          <Field label="Email" error={fieldErrors(error).email}><input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
+          <button className="btn primary">Send reset link</button>
+        </form>
+      )}
+      <p className="small muted"><Link to="/login">Back to sign in</Link></p>
+    </AuthFrame>
+  )
+}
+
+export function ResetPasswordPage() {
+  const [params] = useSearchParams()
+  const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [done, setDone] = useState<string | null>(null)
+  const [error, setError] = useState<unknown>(null)
+  async function submit(e: FormEvent) {
+    e.preventDefault(); setError(null)
+    try {
+      const r = await api<{ message: string }>('/auth/password/reset', { method: 'POST', json: { token: params.get('token'), email: params.get('email'), password, password_confirmation: confirm } })
+      setDone(r.message)
+    } catch (err) { setError(err) }
+  }
+  const errs = fieldErrors(error)
+  return (
+    <AuthFrame title="Choose a new password">
+      {done ? <p className="notice">{done} <Link to="/login">Sign in</Link></p> : (
+        <form className="stack" onSubmit={submit}>
+          <Field label="New password" hint="At least 10 characters, with letters and numbers." error={errs.password}><input type="password" required autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} /></Field>
+          <Field label="Repeat new password"><input type="password" required autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} /></Field>
+          {errs.email && <p className="error-text">{errs.email[0]}</p>}
+          <button className="btn primary">Change password</button>
+        </form>
+      )}
     </AuthFrame>
   )
 }
