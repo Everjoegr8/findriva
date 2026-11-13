@@ -64,6 +64,41 @@ businesses, run audits, update actions), **viewer** (read only). Approving actio
 Status flow: `open → awaiting_approval → approved → in_progress → done → verified`. `verified` is set only by a re-check
 that no longer finds the issue. Work that needs approval cannot move to `in_progress`/`done` before it is approved.
 
+## Ready-made fixes and public page
+| Method | Path | Notes |
+| --- | --- | --- |
+| GET | `/businesses/{id}/fixes` | robots.txt, sitemap.xml, LocalBusiness JSON-LD, head/OG tags. Each fix has `content`, `instructions`, `resolves` (issue codes), `open_issue_codes`, `missing_facts`. Website-only fixes are omitted when there is no website. |
+| GET | `/businesses/{id}/public-page` | publish state, quality `gate`, `suggested_slug`, `can_publish` |
+| POST | `/businesses/{id}/public-page` | `slug?` (owner/admin). 422 until the gate passes (category, description, location, phone, offerings) |
+| DELETE | `/businesses/{id}/public-page` | take the page offline (owner/admin) |
+
+Public, server-rendered: `GET /b/{slug}`, `GET /sitemap.xml` (published pages), `GET /robots.txt`.
+Private street addresses and service-area addresses are never rendered; only http(s) links are.
+
+## Keywords
+| Method | Path | Notes |
+| --- | --- | --- |
+| GET | `/businesses/{id}/keywords` | `?intent=&status=&cluster_id=`; includes `clusters`, `provider`, `budget` |
+| POST | `/businesses/{id}/keywords/research` | builds seeds from facts; measures via the provider within the daily cap. `status`: measured, cached, not_configured, plan_excludes, budget_exhausted, unsupported_market, provider_error, nothing_to_measure |
+| PATCH | `/businesses/{id}/keywords/{keywordId}` | `status: suggested\|tracked\|dismissed` |
+
+`search_volume`, `competition` and `cpc` are `null` (shown as "Not measured") unless a provider measured them; each
+measured row records `metrics_provider` and `metrics_retrieved_at`.
+
+## Content Studio
+| Method | Path | Notes |
+| --- | --- | --- |
+| GET | `/businesses/{id}/content` | drafts, available `types`, `ai_available` |
+| POST | `/businesses/{id}/content` | `type`, `service_id` (service pages), `use_ai?` |
+| GET/PATCH/DELETE | `/businesses/{id}/content/{contentId}` | PATCH `body` creates a new version and re-runs the claim check |
+| POST | `/businesses/{id}/content/{contentId}/regenerate` | new version from the generator |
+| POST | `/businesses/{id}/content/{contentId}/submit` | → `in_review`; refused while blocking flags remain |
+| POST | `/businesses/{id}/content/{contentId}/decision` | `decision: approve\|reject`, `note?` (owner/admin) |
+| POST | `/businesses/{id}/content/{contentId}/apply` | only approved "About your business" copy; writes the business description. Other types are copy-and-paste; Findriva never posts to customer channels. |
+
+Claim flags: `block` (placeholders, unknown phone/email/link/price, ranking promises, too long, Google policy) and `warn`
+(numbers or superlatives not in the facts).
+
 ## Operations (platform staff)
 `GET /admin/stats`, `GET /admin/workspaces`, `PATCH /admin/workspaces/{id}` (`plan, billing_status`),
 `GET /admin/crawl-runs?status=`, `GET /admin/audit-logs?workspace_id=&action=`.

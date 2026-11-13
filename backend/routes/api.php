@@ -6,8 +6,10 @@ use App\Http\Controllers\Api\V1\AuditController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BusinessChildController;
 use App\Http\Controllers\Api\V1\BusinessController;
+use App\Http\Controllers\Api\V1\ContentController;
 use App\Http\Controllers\Api\V1\CoverageController;
 use App\Http\Controllers\Api\V1\DigitalAssetController;
+use App\Http\Controllers\Api\V1\GrowthController;
 use App\Http\Controllers\Api\V1\WorkspaceController;
 use Illuminate\Support\Facades\Route;
 
@@ -61,6 +63,25 @@ Route::prefix('v1')->group(function () {
                 Route::patch('actions/{actionTask}', [ActionController::class, 'update']);
                 Route::post('actions/{actionTask}/request-approval', [ActionController::class, 'requestApproval']);
                 Route::post('actions/{actionTask}/decision', [ActionController::class, 'approve']);
+
+                Route::get('fixes', [GrowthController::class, 'fixes']);
+                Route::get('public-page', [GrowthController::class, 'publication']);
+                Route::post('public-page', [GrowthController::class, 'publish']);
+                Route::delete('public-page', [GrowthController::class, 'unpublish']);
+
+                Route::get('keywords', [GrowthController::class, 'keywords']);
+                Route::post('keywords/research', [GrowthController::class, 'research'])->middleware('throttle:research');
+                Route::patch('keywords/{keyword}', [GrowthController::class, 'updateKeyword']);
+
+                Route::get('content', [ContentController::class, 'index']);
+                Route::post('content', [ContentController::class, 'store'])->middleware('throttle:generate');
+                Route::get('content/{content}', [ContentController::class, 'show']);
+                Route::patch('content/{content}', [ContentController::class, 'update']);
+                Route::delete('content/{content}', [ContentController::class, 'destroy']);
+                Route::post('content/{content}/regenerate', [ContentController::class, 'regenerate'])->middleware('throttle:generate');
+                Route::post('content/{content}/submit', [ContentController::class, 'submit']);
+                Route::post('content/{content}/decision', [ContentController::class, 'decide']);
+                Route::post('content/{content}/apply', [ContentController::class, 'apply']);
 
                 Route::get('{type}', [BusinessChildController::class, 'index'])->whereIn('type', ['aliases', 'locations', 'contacts', 'services', 'products']);
                 Route::post('{type}', [BusinessChildController::class, 'store'])->whereIn('type', ['aliases', 'locations', 'contacts', 'services', 'products']);

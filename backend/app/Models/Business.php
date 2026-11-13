@@ -16,11 +16,12 @@ class Business extends Model
     protected $fillable = [
         'workspace_id', 'name', 'legal_name', 'description', 'primary_category', 'secondary_categories',
         'country', 'default_language', 'website_url', 'status', 'onboarded_at',
+        'public_slug', 'is_published', 'published_at', 'published_by',
     ];
 
     protected function casts(): array
     {
-        return ['secondary_categories' => 'array', 'onboarded_at' => 'datetime'];
+        return ['secondary_categories' => 'array', 'onboarded_at' => 'datetime', 'is_published' => 'boolean', 'published_at' => 'datetime'];
     }
 
     public function aliases(): HasMany
@@ -76,6 +77,21 @@ class Business extends Model
     public function actions(): HasMany
     {
         return $this->hasMany(ActionTask::class);
+    }
+
+    public function keywords(): HasMany
+    {
+        return $this->hasMany(Keyword::class);
+    }
+
+    public function keywordClusters(): HasMany
+    {
+        return $this->hasMany(KeywordCluster::class);
+    }
+
+    public function contentAssets(): HasMany
+    {
+        return $this->hasMany(ContentAsset::class);
     }
 
     public function hasWebsite(): bool

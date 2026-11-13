@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    // Optional: AI drafting in the Content Studio (FINDRIVA_CONTENT_GENERATOR=claude).
+    'anthropic' => [
+        'key' => env('ANTHROPIC_API_KEY'),
+    ],
+
 ];

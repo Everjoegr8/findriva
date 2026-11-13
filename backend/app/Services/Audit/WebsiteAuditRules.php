@@ -5,6 +5,7 @@ namespace App\Services\Audit;
 use App\Models\Business;
 use App\Models\CrawledPage;
 use App\Services\Crawler\UrlNormalizer;
+use App\Services\Fixes\SchemaType;
 use App\Support\Phone;
 use Illuminate\Support\Collection;
 
@@ -190,7 +191,7 @@ class WebsiteAuditRules
 
         // ---- site-wide signals
         $types = $html->flatMap(fn ($p) => array_map('strtolower', array_merge($p->structured_data['types'] ?? [], $p->structured_data['microdata_types'] ?? [])))->unique();
-        if ($types->intersect(self::LOCAL_TYPES)->isEmpty()) {
+        if ($types->intersect(array_merge(self::LOCAL_TYPES, SchemaType::all()))->isEmpty()) {
             $add('local_business_schema_missing', $home?->final_url ?? $facts['final_url'], ['types_found' => $types->values()->all()], $home?->id);
         }
         if ($home && empty($home->extras['favicon'])) {

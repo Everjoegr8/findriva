@@ -27,11 +27,12 @@ These are the blueprint's "decisions to validate" (section 21), decided so the b
 | 1 | Coverage limits, usage events, operations console | Done |
 | 1 | Billing provider (Paystack/Flutterwave/Stripe) | Not started: needs a merchant account |
 | 1 | Email verification, password reset, MFA | Not started (schema has `mfa_enabled_at`) |
-| 2 | Keyword provider adapter (`KeywordResearchProvider`) + one licensed provider | Next |
-| 2 | SERP/competitor adapter, clustering and intent labelling | Next |
-| 2 | Content Studio: drafts only from approved facts, approvals, version history | Next |
-| 2 | Generated fixes: robots.txt, sitemap.xml, LocalBusiness JSON-LD, Open Graph tags | Next |
-| 2 | Hosted one-page microsite (server-rendered) | Next |
+| 2 | Keyword provider adapter (`KeywordResearchProvider`) + DataForSEO, 30-day cache, daily spend cap per workspace | Done (live data once the DataForSEO account is funded) |
+| 2 | Keyword clustering and intent labelling | Done |
+| 2 | SERP/competitor adapter | Next |
+| 2 | Content Studio: drafts only from approved facts, claim checker, approvals, version history; optional Claude polishing | Done |
+| 2 | Generated fixes: robots.txt, sitemap.xml, LocalBusiness JSON-LD, Open Graph tags | Done |
+| 2 | Hosted one-page public page (server-rendered, quality gate, owner/admin publish) | Done |
 | 3 | Google Search Console OAuth (read) | Blocked on credentials |
 | 3 | Bing Webmaster + IndexNow | Blocked on credentials |
 | 3 | Rank observations via licensed provider; reports and export | Planned |
@@ -65,6 +66,15 @@ See `backend/.env.example`. Findriva-specific:
 | `FINDRIVA_CRAWLER_MAX_RUNTIME` | 300 | Seconds per audit |
 | `FINDRIVA_CRAWLER_DELAY_MS` | 250 | Politeness delay between pages |
 | `FINDRIVA_CRAWLER_ALLOW_PRIVATE` | false | Local development only; ignored in production |
+| `FINDRIVA_PUBLIC_URL` | `APP_URL` | Base URL of public pages (`/b/{slug}`), sitemap and robots |
+| `FINDRIVA_KEYWORD_PROVIDER` | empty | `dataforseo` to measure volumes; empty = seeds only, "not measured" |
+| `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD` | empty | DataForSEO API credentials |
+| `FINDRIVA_CONTENT_GENERATOR` | `template` | `claude` to let Claude polish drafts (needs `ANTHROPIC_API_KEY`) |
+| `FINDRIVA_CLAUDE_MODEL` | `claude-opus-5-5` | Model for AI drafts; server-side refusal fallbacks are on |
+| `ANTHROPIC_API_KEY` | empty | Anthropic API key (optional) |
+
+Daily limits per plan live in `backend/config/findriva.php`: `keyword_spend_usd_per_day` (free 0, starter 0.50,
+growth 2.00, agency 10.00) and `content_generations_per_day` (5 / 30 / 100 / 500).
 
 ## Known limitations
 

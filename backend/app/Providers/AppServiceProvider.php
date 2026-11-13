@@ -2,8 +2,14 @@
 
 namespace App\Providers;
 
+use App\Services\Content\ClaudeContentGenerator;
+use App\Services\Content\ContentGenerator;
+use App\Services\Content\TemplateContentGenerator;
 use App\Services\Crawler\DnsHostResolver;
 use App\Services\Crawler\HostResolver;
+use App\Services\Keywords\DataForSeoKeywordProvider;
+use App\Services\Keywords\KeywordResearchProvider;
+use App\Services\Keywords\NullKeywordProvider;
 use App\Support\Tenancy\CurrentWorkspace;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -16,12 +22,23 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->scoped(CurrentWorkspace::class);
         $this->app->bind(HostResolver::class, DnsHostResolver::class);
+
+        $this->app->bind(KeywordResearchProvider::class, fn () => match (config('findriva.keywords.provider')) {
+            'dataforseo' => new DataForSeoKeywordProvider((array) config('findriva.keywords.dataforseo')),
+            default => new NullKeywordProvider,
+        });
+        $this->app->bind(ContentGenerator::class, fn ($app) => config('findriva.content.generator') === 'claude' && filled(config('services.anthropic.key'))
+            ? new ClaudeContentGenerator((string) config('services.anthropic.key'), (string) config('findriva.content.claude_model'))
+            : $app->make(TemplateContentGenerator::class));
     }
 
     public function boot(): void
     {
         RateLimiter::for('auth', fn (Request $r) => Limit::perMinute(10)->by($r->ip()));
         RateLimiter::for('api', fn (Request $r) => Limit::perMinute(180)->by($r->user()?->id ?: $r->ip()));
+        RateLimiter::for('public', fn (Request $r) => Limit::perMinute(120)->by($r->ip()));
+        RateLimiter::for('research', fn (Request $r) => Limit::perHour(30)->by('ws:'.($r->header('X-Workspace-Id') ?: $r->user()?->id)));
+        RateLimiter::for('generate', fn (Request $r) => Limit::perHour(60)->by('ws:'.($r->header('X-Workspace-Id') ?: $r->user()?->id)));
         RateLimiter::for('audits', fn (Request $r) => Limit::perHour(20)->by('ws:'.($r->header('X-Workspace-Id') ?: $r->user()?->id)));
     }
 }
