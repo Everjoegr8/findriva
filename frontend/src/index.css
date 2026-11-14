@@ -146,15 +146,4 @@ pre.code { background: var(--surface-2); border: 1px solid var(--border); border
   .report { border: none; }
 }
 
-/* Public landing page */
-.landing { max-width: 1080px; margin: 0 auto; padding: 0 16px 2rem; display: flex; flex-direction: column; gap: 2rem; }
-.landing-bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-top: 1.25rem; flex-wrap: wrap; }
-.landing-bar nav { gap: 1rem; align-items: center; }
-.landing-hero { padding: 2rem 0 0.5rem; max-width: 760px; }
-.landing-hero h1 { font-size: clamp(1.8rem, 4.5vw, 2.6rem); margin-bottom: 1rem; }
-.landing-hero .lead { font-size: 1.1rem; color: var(--muted); margin-bottom: 1.25rem; }
-.landing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 0.85rem; }
-.landing-promise ul { margin: 0; padding-left: 1.2rem; }
-.landing-promise li { margin-bottom: 0.4rem; }
-.landing-footer { display: flex; gap: 1.25rem; flex-wrap: wrap; border-top: 1px solid var(--border); padding-top: 1rem; }
 .auth-links { display: flex; gap: 1rem; justify-content: center; }
