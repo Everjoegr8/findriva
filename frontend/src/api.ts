@@ -110,3 +110,20 @@ export interface Overview {
   search_engine_data: Record<string, { status: string; note?: string; property?: string | null; data_through?: string | null; last_28_days?: { clicks: number; impressions: number } }>
   open_issues_by_category: Record<string, number>
 }
+
+/** Downloads a file from the API with the signed-in session (a plain link can't carry the token). */
+export async function download(path: string, fallbackName: string): Promise<void> {
+  const headers = new Headers({ Accept: 'text/csv' })
+  if (session.token) headers.set('Authorization', `Bearer ${session.token}`)
+  if (session.workspaceId) headers.set('X-Workspace-Id', session.workspaceId)
+  const res = await fetch(`/api/v1${path}`, { headers })
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new ApiError(res.status, data.message ?? `Download failed (${res.status})`)
+  }
+  const name = /filename="?([^";]+)"?/.exec(res.headers.get('Content-Disposition') ?? '')?.[1] ?? fallbackName
+  const url = URL.createObjectURL(await res.blob())
+  const a = document.createElement('a')
+  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}

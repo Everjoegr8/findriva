@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { api, type BusinessDetail, type Overview } from '../../api'
+import { api, type Action, type BusinessDetail, type Overview, type Paginated } from '../../api'
 import { useAuth } from '../../auth'
-import { BarChart3, Globe, MapPin, Network, Search, Sparkles, Store } from 'lucide-react'
+import { ArrowRight, BarChart3, Globe, MapPin, Network, Search, Sparkles, Store } from 'lucide-react'
 import { ErrorState, Meter, Spinner, StatusBadge, humanize } from '../../ui'
 import { DiscoveryPath, type PathNode, type PathState } from '../../components/DiscoveryPath'
 
@@ -45,6 +45,16 @@ export default function OverviewTab({ detail }: { detail: BusinessDetail }) {
   const c = o.identity_completeness
 
   const nodes = channels(o)
+  const a = o.actions
+  const total = a.open + a.awaiting_approval + a.done_unverified + a.verified
+  const segments = [
+    { key: 'verified', label: 'Verified', n: a.verified, cls: 'seg-verified' },
+    { key: 'done', label: 'Done, waiting for a check', n: a.done_unverified, cls: 'seg-done' },
+    { key: 'approval', label: 'Waiting for your approval', n: a.awaiting_approval, cls: 'seg-approval' },
+    { key: 'open', label: 'To do', n: a.open, cls: 'seg-open' },
+  ]
+  const issues = Object.entries(o.open_issues_by_category).filter(([, n]) => n > 0).sort((x, y) => y[1] - x[1])
+  const maxIssues = Math.max(1, ...issues.map(([, n]) => n))
   const live = nodes.filter((n) => n.state === 'live').length
 
   return (
@@ -87,6 +97,33 @@ export default function OverviewTab({ detail }: { detail: BusinessDetail }) {
         </div>
       </div>
 
+      <div className="overview-grid">
+        <div className="card stack" style={{ gap: '0.75rem' }}>
+          <div className="row between"><h2 style={{ margin: 0 }}>Progress on improvements</h2><span className="small muted">{total} in total</span></div>
+          {total === 0 ? <p className="small muted" style={{ margin: 0 }}>No improvements yet. They appear here after the first audit.</p> : (
+            <>
+              <div className="seg-bar" role="img" aria-label={segments.map((x) => `${x.label}: ${x.n}`).join(', ')}>
+                {segments.filter((x) => x.n > 0).map((x) => <span key={x.key} className={x.cls} style={{ flexGrow: x.n }} />)}
+              </div>
+              <ul className="seg-legend">
+                {segments.map((x) => <li key={x.key}><span className={`dot ${x.cls}`} aria-hidden />{x.label}<strong>{x.n}</strong></li>)}
+              </ul>
+            </>
+          )}
+        </div>
+        <div className="card stack" style={{ gap: '0.6rem' }}>
+          <div className="row between"><h2 style={{ margin: 0 }}>Open issues by area</h2><Link to="audit" className="small">See the audit</Link></div>
+          {issues.length === 0 ? <p className="small muted" style={{ margin: 0 }}>No open issues from the last audit.</p> : issues.map(([cat, n]) => (
+            <div key={cat} className="hbar">
+              <span className="hbar-label">{humanize(cat)}</span>
+              <span className="hbar-track"><span style={{ width: `${(n / maxIssues) * 100}%` }} /></span>
+              <strong>{n}</strong>
+            </div>
+          ))}
+        </div>
+        <NextActions businessId={id} />
+      </div>
+
       {o.actions.awaiting_approval > 0 && (
         <div className="notice">{o.actions.awaiting_approval} change(s) are waiting for your approval. <Link to="actions">Review them</Link></div>
       )}
@@ -119,6 +156,30 @@ export default function OverviewTab({ detail }: { detail: BusinessDetail }) {
           </tbody>
         </table>
       </div>
+    </div>
+  )
+}
+
+function NextActions({ businessId }: { businessId: number }) {
+  const { workspaceId } = useAuth()
+  const q = useQuery({
+    queryKey: ['actions', workspaceId, businessId, 'next'],
+    queryFn: () => api<Paginated<Action>>(`/businesses/${businessId}/actions?per_page=4&status=open,awaiting_approval,approved,in_progress`),
+  })
+  const rows = q.data?.data ?? []
+  return (
+    <div className="card stack next-actions" style={{ gap: '0.5rem' }}>
+      <div className="row between"><h2 style={{ margin: 0 }}>Do these next</h2><Link to="actions" className="small">Action Centre</Link></div>
+      {q.isLoading && <Spinner />}
+      {!q.isLoading && rows.length === 0 && <p className="small muted" style={{ margin: 0 }}>Nothing waiting. Nice work.</p>}
+      {rows.map((r) => (
+        <Link key={r.id} to="actions" className="next-row">
+          <span className={`impact ${r.impact}`} aria-label={`${r.impact} impact`} />
+          <span className="next-title">{r.title}</span>
+          <StatusBadge status={r.status} />
+          <ArrowRight size={15} aria-hidden />
+        </Link>
+      ))}
     </div>
   )
 }
