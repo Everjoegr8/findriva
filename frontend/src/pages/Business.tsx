@@ -4,6 +4,7 @@ import { api, type BusinessDetail } from '../api'
 import { useAuth } from '../auth'
 import { ErrorState, Spinner, Badge, PageTitle } from '../ui'
 import { BUSINESS_NAV } from '../layouts/nav'
+import { ExportMenu } from '../components/ExportMenu'
 import OverviewTab from './business/Overview'
 import ActionsTab from './business/Actions'
 import AuditTab from './business/Audit'
@@ -41,6 +42,7 @@ export default function BusinessPage() {
       <PageTitle
         eyebrow={section?.label ?? 'Overview'}
         title={b.name}
+        actions={<ExportMenu businessId={b.id} />}
         sub={
           <span className="row small" style={{ gap: '0.6rem' }}>
             {b.primary_category && <span>{b.primary_category}</span>}

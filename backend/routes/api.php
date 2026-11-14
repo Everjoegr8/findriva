@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\V1\BusinessProfileController;
 use App\Http\Controllers\Api\V1\ContentController;
 use App\Http\Controllers\Api\V1\CoverageController;
 use App\Http\Controllers\Api\V1\DigitalAssetController;
+use App\Http\Controllers\Api\V1\ExportController;
 use App\Http\Controllers\Api\V1\GrowthController;
 use App\Http\Controllers\Api\V1\IntegrationController;
 use App\Http\Controllers\Api\V1\LocalGridController;
@@ -87,6 +88,7 @@ Route::prefix('v1')->group(function () {
 
                 Route::get('assets', [DigitalAssetController::class, 'index']);
                 Route::post('assets', [DigitalAssetController::class, 'store']);
+                Route::post('assets/import', [DigitalAssetController::class, 'import'])->middleware('throttle:10,1');
                 Route::patch('assets/{asset}', [DigitalAssetController::class, 'update']);
                 Route::delete('assets/{asset}', [DigitalAssetController::class, 'destroy']);
                 Route::post('assets/{asset}/scan', [DigitalAssetController::class, 'rescan']);
@@ -165,6 +167,7 @@ Route::prefix('v1')->group(function () {
 
                 Route::get('performance', [ResultsController::class, 'performance']);
                 Route::get('report', [ResultsController::class, 'report']);
+                Route::get('export/{type}', [ExportController::class, 'show'])->middleware('throttle:60,1');
 
                 Route::get('{type}', [BusinessChildController::class, 'index'])->whereIn('type', ['aliases', 'locations', 'contacts', 'services', 'products']);
                 Route::post('{type}', [BusinessChildController::class, 'store'])->whereIn('type', ['aliases', 'locations', 'contacts', 'services', 'products']);

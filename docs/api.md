@@ -70,6 +70,8 @@ businesses, run audits, update actions), **viewer** (read only). Approving actio
 | GET/POST | `/businesses/{id}/assets` | POST `url, platform?, handle?, ownership_status?`; platform auto-detected; public scan queued |
 | PATCH/DELETE | `/businesses/{id}/assets/{assetId}` | `connection_state` may only be `not_connected` or `manual` |
 | POST | `/businesses/{id}/assets/{assetId}/scan` | re-check the public page |
+| POST | `/businesses/{id}/assets/import` | `file` (CSV or text, up to 200 KB) or `text`: every web link found is added (max 50); returns `added` and `skipped` with reasons |
+| GET | `/businesses/{id}/export/{type}` | CSV download (UTF-8, Excel-ready): `actions, issues, keywords, rankings, reviews, profiles, search, ai-answers`. Cells starting with `= + - @` are written as text; empty means not measured. Logged as `export.downloaded` |
 
 ## Audits and issues
 | Method | Path | Notes |

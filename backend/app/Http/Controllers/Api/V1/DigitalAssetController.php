@@ -13,7 +13,9 @@ use App\Services\AuditLogger;
 use App\Services\BusinessService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 /** The digital asset registry: every website, profile, storefront and listing a business has. */
 class DigitalAssetController extends Controller
@@ -41,6 +43,50 @@ class DigitalAssetController extends Controller
         $this->runner->refreshIdentity($business);
 
         return response()->json(['data' => $asset], 201);
+    }
+
+    /**
+     * Add many profile links at once, from a CSV or text file or pasted lines. Every cell that is a web link is
+     * read; duplicates and invalid links are reported back, never silently dropped.
+     */
+    public function import(Request $request, Business $business): JsonResponse
+    {
+        $this->authorizePermission(Permission::BusinessUpdate);
+        $this->ensureInWorkspace($business);
+        $request->validate([
+            'file' => ['required_without:text', 'file', 'max:200', 'mimetypes:text/plain,text/csv,application/csv,application/vnd.ms-excel'],
+            'text' => ['required_without:file', 'string', 'max:20000'],
+        ]);
+        $raw = $request->hasFile('file') ? (string) file_get_contents($request->file('file')->getRealPath()) : (string) $request->input('text');
+        preg_match_all('~https?://[^\s,;"\'<>]+~i', $raw, $m);
+        $urls = array_values(array_unique(array_map(fn ($u) => rtrim($u, '.)'), $m[0])));
+        if (! $urls) {
+            throw ValidationException::withMessages(['file' => 'No web links found. Put one link per line or per cell, starting with https://']);
+        }
+        if (count($urls) > 50) {
+            throw ValidationException::withMessages(['file' => 'Up to 50 links at a time, please. This file has '.count($urls).'.']);
+        }
+
+        $added = [];
+        $skipped = [];
+        foreach ($urls as $url) {
+            if (Validator::make(['url' => $url], ['url' => BusinessRules::asset()['url']])->fails()) {
+                $skipped[] = ['url' => $url, 'reason' => 'Not a valid web link'];
+
+                continue;
+            }
+            try {
+                $added[] = $this->service->addAsset($business, ['url' => $url]);
+            } catch (ValidationException $e) {
+                $skipped[] = ['url' => $url, 'reason' => collect($e->errors())->flatten()->first()];
+            }
+        }
+        if ($added) {
+            $this->audit->log('asset.imported', $business, null, ['added' => count($added), 'skipped' => count($skipped)]);
+            $this->runner->refreshIdentity($business);
+        }
+
+        return response()->json(['data' => ['added' => count($added), 'skipped' => $skipped]], $added ? 201 : 200);
     }
 
     public function update(Request $request, Business $business, DigitalAsset $asset): JsonResponse
