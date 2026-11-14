@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { Navigate, NavLink, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuth } from './auth'
 import { Spinner } from './ui'
@@ -9,12 +10,12 @@ import BusinessesPage from './pages/Businesses'
 import OnboardingPage from './pages/Onboarding'
 import BusinessPage from './pages/Business'
 import AdminPage from './pages/Admin'
-import LandingPage from './pages/Landing'
+const LandingPage = lazy(() => import('./pages/Landing'))
 
 function Shell() {
   const { user, workspaceId, setWorkspace, signOut } = useAuth()
   const { pathname } = useLocation()
-  if (!user) return pathname === '/' ? <LandingPage /> : <Navigate to="/login" replace />
+  if (!user) return pathname === '/' ? <Suspense fallback={null}><LandingPage /></Suspense> : <Navigate to="/login" replace />
   return (
     <div className="shell">
       <aside className="sidebar">
