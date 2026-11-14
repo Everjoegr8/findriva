@@ -55,7 +55,7 @@ export default function App() {
         <Route index element={<BusinessesPage />} />
         <Route path="/businesses/new" element={<OnboardingPage />} />
         <Route path="/businesses/:id/*" element={<BusinessPage />} />
-        <Route path="/admin" element={<AdminPage />} />
+        <Route path="/admin/*" element={<AdminPage />} />
         <Route path="/billing" element={<BillingPage />} />
         <Route path="/account" element={<AccountPage />} />
       </Route>

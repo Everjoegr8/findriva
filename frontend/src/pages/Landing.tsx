@@ -212,10 +212,10 @@ function Hero() {
         <motion.div style={{ y }} className="relative mx-auto w-full max-w-lg lg:max-w-none">
           <div className="grid grid-cols-5 grid-rows-6 gap-3 sm:gap-4" style={{ height: 'min(560px, 120vw)' }}>
             <motion.div initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.9, delay: 0.2, ease }} className="col-span-3 row-span-4">
-              <Img photo={photos.storefront} w={520} h={640} eager className="h-full rounded-3xl ring-1 ring-white/10" />
+              <Img photo={photos.boutique} w={520} h={640} eager className="h-full rounded-3xl ring-1 ring-white/10" />
             </motion.div>
             <motion.div initial={{ opacity: 0, y: -40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, delay: 0.35, ease }} className="col-span-2 row-span-3">
-              <Img photo={photos.boutique} w={360} h={480} eager className="h-full rounded-3xl ring-1 ring-white/10" />
+              <Img photo={photos.tailor} w={360} h={480} eager className="h-full rounded-3xl ring-1 ring-white/10" />
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, delay: 0.5, ease }} className="col-span-2 row-span-3">
               <Img photo={photos.streetFood} w={360} h={480} eager className="h-full rounded-3xl ring-1 ring-white/10" />
@@ -225,7 +225,7 @@ function Hero() {
             </motion.div>
           </div>
 
-          <FloatCard className="-left-2 top-6 sm:-left-8" delay={0.9}>
+          <FloatCard className="-left-2 -top-6 sm:-left-10 sm:-top-8" delay={0.9}>
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-100 text-teal-700"><Icon d={icon.pin} className="h-5 w-5" /></div>
               <div><div className="font-semibold">Seen on Google Maps</div><div className="text-slate-500">“tailor near Yaba”</div></div>
@@ -455,10 +455,10 @@ function FinalCta() {
     <section className="px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
       <Reveal className="mx-auto max-w-7xl">
         <div className="relative isolate overflow-hidden rounded-[2rem] bg-ink px-6 py-16 text-center text-white sm:px-12 sm:py-24">
-          <Img photo={photos.city} w={1400} h={700} className="absolute inset-0 -z-10 h-full opacity-35" />
-          <div className="absolute inset-0 -z-10 bg-gradient-to-br from-ink via-ink/85 to-teal-900/70" />
-          <h2 className="mx-auto max-w-3xl text-3xl font-extrabold tracking-tight sm:text-5xl">Your customers are searching right now.</h2>
-          <p className="mx-auto mt-5 max-w-xl text-base text-white/75 sm:text-lg">See how your business shows up in a few minutes. It is free to start, and you do not need a website.</p>
+          <Img photo={photos.city} w={1400} h={700} className="absolute inset-0 -z-10 h-full" />
+          <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ink/85 via-ink/40 to-ink/15" />
+          <h2 className="mx-auto max-w-3xl text-3xl font-extrabold tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)] sm:text-5xl">Your customers are searching right now.</h2>
+          <p className="mx-auto mt-5 max-w-xl text-base text-white/90 drop-shadow-[0_1px_8px_rgba(0,0,0,0.7)] sm:text-lg">See how your business shows up in a few minutes. It is free to start, and you do not need a website.</p>
           <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }} className="mt-9 inline-block">
             <Link to="/register" className="inline-flex rounded-full bg-lime px-8 py-4 text-base font-bold text-ink shadow-xl shadow-lime/25">Check my business free</Link>
           </motion.div>

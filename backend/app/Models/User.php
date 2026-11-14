@@ -33,6 +33,8 @@ class User extends Authenticatable implements MustVerifyEmail
             'mfa_secret' => 'encrypted',
             'mfa_pending_secret' => 'encrypted',
             'mfa_recovery_codes' => 'array',
+            'last_login_at' => 'datetime',
+            'disabled_at' => 'datetime',
         ];
     }
 
