@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, type Business } from '../../api'
 import { useAuth, useRole } from '../../auth'
 import { Badge, Empty, ErrorState, Spinner, fieldErrors, humanize } from '../../ui'
+import { BingCard, BingPerformanceSection, type BingConnection } from './Bing'
 
 interface Connection {
   id: number; status: string; account_email: string | null; property: string | null
@@ -11,6 +12,7 @@ interface Connection {
 }
 interface Integrations {
   google_search_console: { available: boolean; connection: Connection | null }
+  bing_webmaster: { available: boolean; connection: BingConnection | null }
   indexnow: null | { host: string; key: string | null; key_location: string | null; verified_at: string | null; recent: { id: number; url_count: number; outcome: string; message: string | null; created_at: string }[] }
   domain: { domain: string; verification_status: string; verification_method: string | null } | null
   can_manage: boolean
@@ -29,6 +31,8 @@ interface Report {
   actions: { completed: number; verified: number; verified_titles: string[] }; content_approved: number
   public_page: { published: boolean; url: string | null }; indexnow: { submissions: number; urls_accepted: number }
   search: null | { source: string; property: string; days_measured: number; totals: Totals; previous_month: Totals; comparable: boolean }
+  bing: null | { source: string; property: string; days_measured: number; clicks: number; impressions: number }
+  rank_checks: { checks: number; keywords: number }
   not_measured: string[]
 }
 
@@ -38,6 +42,7 @@ const ERRORS: Record<string, string> = {
   forbidden: 'Only an owner or admin can connect accounts.',
   scope: 'Google did not grant read access to Search Console. Please tick the Search Console box when asked.',
   google: 'Google returned an error while connecting. Please try again.',
+  bing: 'Bing returned an error while connecting. Please try again.',
 }
 
 function change(now: number | null | undefined, before: number | null | undefined, lowerIsBetter = false) {
@@ -172,6 +177,12 @@ function ReportView({ business }: { business: Business }) {
                 <tr><th>Average position</th><td>{r.search.totals.position ?? 'Not measured'}</td></tr>
                 <tr><th>Source</th><td className="small">{r.search.source}, {r.search.property}, {r.search.days_measured} days measured{!r.search.comparable && r.search.previous_month.days > 0 ? '. The month is not complete yet, so it is not compared with last month.' : ''}</td></tr>
               </>}
+              {r.bing && <>
+                <tr><th>Bing clicks</th><td>{fmt(r.bing.clicks)}</td></tr>
+                <tr><th>Bing impressions</th><td>{fmt(r.bing.impressions)}</td></tr>
+                <tr><th>Bing source</th><td className="small">{r.bing.source}, {r.bing.property}, {r.bing.days_measured} days measured</td></tr>
+              </>}
+              {r.rank_checks.checks > 0 && <tr><th>Live position checks</th><td>{r.rank_checks.checks} checks across {r.rank_checks.keywords} keyword{r.rank_checks.keywords === 1 ? '' : 's'}</td></tr>}
             </tbody>
           </table>
           {r.actions.verified_titles.length > 0 && <div><strong className="small">Verified fixes</strong><ul className="small">{r.actions.verified_titles.map((t) => <li key={t}>{t}</li>)}</ul></div>}
@@ -194,8 +205,13 @@ export default function ResultsTab({ business }: { business: Business }) {
     queryFn: () => api<{ data: Performance }>(`/businesses/${business.id}/performance?days=${days}`),
     refetchInterval: (query) => (query.state.data?.data.connected && !query.state.data.data.measured ? 5000 : false),
   })
-  const refresh = () => { void qc.invalidateQueries({ queryKey: ik }); void qc.invalidateQueries({ queryKey: ['performance', workspaceId, business.id] }) }
-  const notice = params.get('connected') ? 'Google Search Console is connected. Your first import is running.' : null
+  const refresh = () => {
+    void qc.invalidateQueries({ queryKey: ik })
+    void qc.invalidateQueries({ queryKey: ['performance', workspaceId, business.id] })
+    void qc.invalidateQueries({ queryKey: ['bing-performance', workspaceId, business.id] })
+  }
+  const connected = params.get('connected')
+  const notice = connected === 'bing' ? 'Bing Webmaster Tools is connected. Your first import is running.' : connected ? 'Google Search Console is connected. Your first import is running.' : null
   const error = params.get('integration_error')
 
   if (integrations.isLoading) return <Spinner />
@@ -209,6 +225,7 @@ export default function ResultsTab({ business }: { business: Business }) {
       {error && <p className="notice warn no-print">{ERRORS[error] ?? 'Connecting did not finish. Please try again.'}</p>}
       <div className="grid no-print" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
         <SearchConsoleCard business={business} data={integrations.data!.data} onChange={refresh} />
+        <BingCard business={business} available={integrations.data!.data.bing_webmaster.available} connection={integrations.data!.data.bing_webmaster.connection} canManage={integrations.data!.data.can_manage} onChange={refresh} />
         <IndexNowCard business={business} data={integrations.data!.data} onChange={refresh} />
       </div>
 
@@ -251,7 +268,8 @@ export default function ResultsTab({ business }: { business: Business }) {
         </div>
       )}
       {p && !p.measured && p.connected && <p className="notice no-print">Importing your Search Console data. This page updates when it is ready.</p>}
-      {p && !p.connected && <Empty title="No search data yet">Connect Google Search Console above to see real clicks and impressions.</Empty>}
+      {p && !p.connected && <Empty title="No Google search data yet">Connect Google Search Console above to see real clicks and impressions.</Empty>}
+      <BingPerformanceSection business={business} />
 
       <ReportView business={business} />
     </div>

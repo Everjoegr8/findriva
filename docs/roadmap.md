@@ -35,7 +35,7 @@ These are the blueprint's "decisions to validate" (section 21), decided so the b
 | 2 | Hosted one-page public page (server-rendered, quality gate, owner/admin publish) | Done |
 | 3 | Google Search Console OAuth (read), nightly import, domain verification | Done (live once the Google OAuth client exists) |
 | 3 | IndexNow (Bing, Yandex, Naver, Seznam) with per-site key check | Done |
-| 3 | Bing Webmaster Tools API (reports) | Blocked on credentials |
+| 3 | Bing Webmaster Tools reports: connect with Bing's sign-in, nightly import, Bing section on Results and in the monthly report | Done (live once the Bing OAuth client exists) |
 | 3 | Results page and monthly report (print/PDF) from measured data | Done |
 | 3 | Weekly rank observations for tracked keywords, history and change, plan allowance and daily cap | Done |
 | 5 | Google Business Profile: connect, compare facts, daily actions, reviews inbox with approved replies | Done (live once Google approves Business Profile API access) |
