@@ -1,4 +1,4 @@
-import { Navigate, NavLink, Outlet, Route, Routes } from 'react-router-dom'
+import { Navigate, NavLink, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuth } from './auth'
 import { Spinner } from './ui'
 import { ForgotPasswordPage, LoginPage, RegisterPage, ResetPasswordPage } from './pages/Auth'
@@ -9,10 +9,12 @@ import BusinessesPage from './pages/Businesses'
 import OnboardingPage from './pages/Onboarding'
 import BusinessPage from './pages/Business'
 import AdminPage from './pages/Admin'
+import LandingPage from './pages/Landing'
 
 function Shell() {
   const { user, workspaceId, setWorkspace, signOut } = useAuth()
-  if (!user) return <Navigate to="/login" replace />
+  const { pathname } = useLocation()
+  if (!user) return pathname === '/' ? <LandingPage /> : <Navigate to="/login" replace />
   return (
     <div className="shell">
       <aside className="sidebar">
