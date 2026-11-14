@@ -7,6 +7,7 @@ use App\Models\BillingTransaction;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Services\AuditLogger;
+use App\Services\Platform\PlatformConfig;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -22,7 +23,7 @@ class BillingService
 
     public function prices(): array
     {
-        return config('findriva.billing.prices');
+        return app(PlatformConfig::class)->prices();
     }
 
     public function checkout(Workspace $workspace, User $by, string $plan): array

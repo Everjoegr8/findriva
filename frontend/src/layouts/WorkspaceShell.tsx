@@ -7,7 +7,8 @@ import { useAuth } from '../auth'
 import { VerifyBanner } from '../VerifyBanner'
 import { CommandPalette, useCommandShortcut, type Command } from '../components/CommandPalette'
 import { Brand, Frame, SideGroup, SideLink, Switcher, UserCard } from './Frame'
-import { BUSINESS_NAV, WORKSPACE_NAV } from './nav'
+import { BUSINESS_NAV, WORKSPACE_NAV, type NavGroup } from './nav'
+import { moduleOn, usePlatform } from '../platform'
 
 const LandingPage = lazy(() => import('../pages/Landing'))
 
@@ -29,13 +30,15 @@ export default function WorkspaceShell() {
   const businesses = useMemo(() => list.data?.data ?? [], [list.data])
   const current = businesses.find((b) => String(b.id) === bid)
   const workspace = user?.workspaces.find((w) => w.id === workspaceId)
+  const platform = usePlatform()
+  const groups = useMemo<NavGroup[]>(() => BUSINESS_NAV.map((g) => ({ ...g, items: g.items.filter((n) => moduleOn(platform.data, n.module)) })).filter((g) => g.items.length), [platform.data])
 
   const commands = useMemo<Command[]>(() => {
     const out: Command[] = WORKSPACE_NAV.map((n) => ({ id: `ws${n.path}`, label: n.label, group: 'Workspace', to: n.path, icon: n.icon, keywords: n.keywords }))
     businesses.forEach((b) => out.push({ id: `b${b.id}`, label: b.name, group: 'Business', to: `/businesses/${b.id}`, icon: Building2, keywords: b.primary_category ?? '' }))
-    if (bid) BUSINESS_NAV.forEach((g) => g.items.forEach((n) => out.push({ id: `s${n.path}`, label: n.label, group: current?.name ?? g.title, to: `/businesses/${bid}${n.path ? `/${n.path}` : ''}`, icon: n.icon, keywords: n.keywords })))
+    if (bid) groups.forEach((g) => g.items.forEach((n) => out.push({ id: `s${n.path}`, label: n.label, group: current?.name ?? g.title, to: `/businesses/${bid}${n.path ? `/${n.path}` : ''}`, icon: n.icon, keywords: n.keywords })))
     return out
-  }, [businesses, bid, current])
+  }, [businesses, bid, current, groups])
 
   if (!user) return pathname === '/' ? <Suspense fallback={null}><LandingPage /></Suspense> : <Navigate to="/login" replace />
 
@@ -55,7 +58,7 @@ export default function WorkspaceShell() {
         {bid ? (
           <>
             <Link to="/" className="side-back"><ArrowLeft size={15} aria-hidden /> All businesses</Link>
-            {BUSINESS_NAV.map((g) => (
+            {groups.map((g) => (
               <SideGroup key={g.title} title={g.title}>
                 {g.items.map((n) => <SideLink key={n.path} item={n} to={`/businesses/${bid}${n.path ? `/${n.path}` : ''}`} />)}
               </SideGroup>
@@ -91,6 +94,7 @@ export default function WorkspaceShell() {
 
   return (
     <Frame variant="workspace" sidebar={sidebar} topbar={topbar} onSearch={() => setSearch(true)} searchLabel="Search">
+      {platform.data?.announcement && <p className="notice announce no-print" role="status">{platform.data.announcement}</p>}
       <VerifyBanner />
       <Outlet />
       <CommandPalette open={search} onClose={() => setSearch(false)} commands={commands} />

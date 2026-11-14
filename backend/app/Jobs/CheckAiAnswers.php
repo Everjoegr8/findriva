@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Business;
 use App\Models\Workspace;
 use App\Services\AiVisibility\AiVisibility;
+use App\Services\Platform\PlatformConfig;
 use App\Support\Tenancy\CurrentWorkspace;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -30,6 +31,9 @@ class CheckAiAnswers implements ShouldBeUnique, ShouldQueue
 
     public function handle(CurrentWorkspace $tenant, AiVisibility $ai): void
     {
+        if (! app(PlatformConfig::class)->moduleOn('ai_answers')) {
+            return; // switched off in Platform Control
+        }
         $tenant->runAs(Workspace::findOrFail($this->workspaceId), function () use ($ai) {
             if ($business = Business::query()->find($this->businessId)) {
                 $ai->run($business, $this->scheduled);

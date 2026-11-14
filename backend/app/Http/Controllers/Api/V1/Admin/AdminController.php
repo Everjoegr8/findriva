@@ -9,6 +9,7 @@ use App\Models\UsageEvent;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Services\AuditLogger;
+use App\Services\Platform\PlatformConfig;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +23,7 @@ class AdminController extends Controller
 {
     public function stats(): JsonResponse
     {
-        $prices = config('findriva.billing.prices', []);
+        $prices = app(PlatformConfig::class)->prices();
         $paying = Workspace::query()->whereIn('billing_status', ['active', 'past_due'])->where('plan', '!=', 'free')
             ->selectRaw('plan, COUNT(*) as n')->groupBy('plan')->pluck('n', 'plan');
 

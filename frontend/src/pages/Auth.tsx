@@ -1,3 +1,4 @@
+import { usePlatform } from '../platform'
 import { useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { api, type User } from '../api'
@@ -118,6 +119,7 @@ export function ResetPasswordPage() {
 
 export function RegisterPage() {
   const { signIn } = useAuth()
+  const platform = usePlatform()
   const [form, setForm] = useState({ name: '', email: '', password: '', workspace_name: '', workspace_type: 'business' })
   const [error, setError] = useState<unknown>(null)
   const [busy, setBusy] = useState(false)
@@ -133,6 +135,7 @@ export function RegisterPage() {
   const errs = fieldErrors(error)
   return (
     <AuthFrame title="Create your account">
+      {platform.data?.signups_open === false && <p className="notice warn">New sign-ups are paused right now. Please check back soon. If you already have an account, you can still sign in.</p>}
       <form className="stack" onSubmit={submit}>
         <Field label="Your name" error={errs.name}><input required value={form.name} onChange={set('name')} autoComplete="name" /></Field>
         <Field label="Email" error={errs.email}><input type="email" required value={form.email} onChange={set('email')} autoComplete="email" /></Field>

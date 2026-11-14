@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Services\AuditLogger;
+use App\Services\Platform\PlatformConfig;
 use App\Services\Security\Mfa;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -22,6 +23,9 @@ class AuthController extends Controller
 {
     public function register(Request $request, AuditLogger $audit): JsonResponse
     {
+        if (! app(PlatformConfig::class)->general()['signups_open']) {
+            throw ValidationException::withMessages(['email' => 'New sign-ups are paused right now. Please try again soon.']);
+        }
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
             'email' => ['required', 'email:rfc', 'max:190', 'unique:users,email'],

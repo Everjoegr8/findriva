@@ -13,6 +13,7 @@ use App\Services\Crawler\HostResolver;
 use App\Services\Keywords\DataForSeoKeywordProvider;
 use App\Services\Keywords\KeywordResearchProvider;
 use App\Services\Keywords\NullKeywordProvider;
+use App\Services\Platform\PlatformConfig;
 use App\Services\Rankings\DataForSeoMapsProvider;
 use App\Services\Rankings\DataForSeoSerpProvider;
 use App\Services\Rankings\MapsProvider;
@@ -44,12 +45,25 @@ class AppServiceProvider extends ServiceProvider
             'dataforseo' => new DataForSeoMapsProvider((array) config('findriva.keywords.dataforseo') + ['estimated_cost_per_point' => config('findriva.rankings.estimated_cost_per_map_point')]),
             default => new NullMapsProvider,
         });
-        $this->app->bind(AnswerEngine::class, fn () => config('findriva.ai_answers.engine') === 'claude' && filled(config('services.anthropic.key'))
-            ? new ClaudeAnswerEngine((string) config('services.anthropic.key'), (array) config('findriva.ai_answers'))
-            : new NullAnswerEngine);
-        $this->app->bind(ContentGenerator::class, fn ($app) => config('findriva.content.generator') === 'claude' && filled(config('services.anthropic.key'))
-            ? new ClaudeContentGenerator((string) config('services.anthropic.key'), (string) config('findriva.content.claude_model'))
-            : $app->make(TemplateContentGenerator::class));
+        // Which AI model each feature uses is chosen in Platform Control; the API key stays in the server environment.
+        $this->app->bind(AnswerEngine::class, function ($app) {
+            $ai = $app->make(PlatformConfig::class)->ai();
+            if (! $ai['answers_enabled'] || blank(config('services.anthropic.key'))) {
+                return new NullAnswerEngine;
+            }
+            $m = PlatformConfig::MODELS[$ai['answers_model']];
+
+            return new ClaudeAnswerEngine((string) config('services.anthropic.key'), [
+                'model' => $ai['answers_model'], 'input_usd_per_mtok' => $m['input'], 'output_usd_per_mtok' => $m['output'],
+            ] + (array) config('findriva.ai_answers'));
+        });
+        $this->app->bind(ContentGenerator::class, function ($app) {
+            $ai = $app->make(PlatformConfig::class)->ai();
+
+            return $ai['content_engine'] === 'claude' && filled(config('services.anthropic.key'))
+                ? new ClaudeContentGenerator((string) config('services.anthropic.key'), $ai['content_model'])
+                : $app->make(TemplateContentGenerator::class);
+        });
     }
 
     public function boot(): void
