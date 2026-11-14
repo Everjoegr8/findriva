@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { CheckCircle2, CircleDashed, KeyRound } from 'lucide-react'
 import { api } from '../../api'
-import { Badge, ErrorState, Field, PageTitle, Spinner, fieldErrors, humanize } from '../../ui'
+import { Badge, ErrorState, Field, PageTitle, Spinner, Toggle, fieldErrors, humanize } from '../../ui'
 
 interface Plan { label: string; price_kobo: number | null; limits: Record<string, number>; defaults: Record<string, number | string | null> }
 interface Provider { key: string; name: string; powers: string; configured: boolean; env: string[]; facts?: Record<string, string>; connections?: Record<string, Record<string, number>> }
@@ -25,14 +25,6 @@ function useSave<T>(path: string, onDone?: () => void) {
     mutationFn: (json: T) => api(path, { method: 'PUT', json }),
     onSuccess: () => { void qc.invalidateQueries({ queryKey: ['admin', 'platform'] }); void qc.invalidateQueries({ queryKey: ['platform'] }); onDone?.() },
   })
-}
-
-export function Toggle({ checked, onChange, label, disabled }: { checked: boolean; onChange: (v: boolean) => void; label: string; disabled?: boolean }) {
-  return (
-    <button type="button" role="switch" aria-checked={checked} aria-label={label} disabled={disabled} className={`switch ${checked ? 'on' : ''}`} onClick={() => onChange(!checked)}>
-      <span />
-    </button>
-  )
 }
 
 function Loading({ q }: { q: { isLoading: boolean; error: unknown; refetch: () => unknown } }) {

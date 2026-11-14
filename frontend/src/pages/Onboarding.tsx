@@ -1,3 +1,4 @@
+import { Autocomplete, ServiceIdeas } from '../components/Autocomplete'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -77,7 +78,7 @@ export default function OnboardingPage() {
             <h2>Your business</h2>
             <Field label="Business name" error={errs.name}><input autoFocus value={basics.name} onChange={(e) => setBasics({ ...basics, name: e.target.value })} placeholder="e.g. Glow by Ada" /></Field>
             <Field label="What kind of business is it?" hint="Your main category decides which searches you can appear for, e.g. Makeup artist, Generator repair, Bakery.">
-              <input value={basics.primary_category} onChange={(e) => setBasics({ ...basics, primary_category: e.target.value })} />
+              <Autocomplete field="categories" value={basics.primary_category} onChange={(v) => setBasics({ ...basics, primary_category: v })} placeholder="Start typing, e.g. Makeup artist" />
             </Field>
             <Field label="Describe it in two or three sentences" hint="What you offer, who it's for and where.">
               <textarea rows={3} value={basics.description} onChange={(e) => setBasics({ ...basics, description: e.target.value })} />
@@ -105,7 +106,7 @@ export default function OnboardingPage() {
                 <div className="grid">
                   <Field label="Name (optional)"><input value={l.label} onChange={(e) => updateLoc(i, { label: e.target.value })} placeholder="Lekki studio" /></Field>
                   <Field label="Street address"><input value={l.address_line1} onChange={(e) => updateLoc(i, { address_line1: e.target.value })} /></Field>
-                  <Field label="City / town"><input value={l.city} onChange={(e) => updateLoc(i, { city: e.target.value })} placeholder="Lagos" /></Field>
+                  <Field label="City / town"><Autocomplete field="cities" value={l.city} onChange={(v) => updateLoc(i, { city: v })} placeholder="Lagos" /></Field>
                   <Field label="State"><input value={l.region} onChange={(e) => updateLoc(i, { region: e.target.value })} /></Field>
                 </div>
                 {l.location_type !== 'storefront' && (
@@ -162,6 +163,7 @@ export default function OnboardingPage() {
             <h2>What you offer</h2>
             <Field label="Your main services or products" hint="One per line. Each one is something customers search for.">
               <textarea rows={6} value={services} onChange={(e) => setServices(e.target.value)} placeholder={'Bridal makeup\nEvent makeup\nMakeup classes'} />
+              <ServiceIdeas category={basics.primary_category} existing={services.split('\n')} onAdd={(x) => setServices((cur) => (cur.trim() ? `${cur.replace(/\s+$/, '')}\n${x}` : x))} />
             </Field>
           </>
         )}

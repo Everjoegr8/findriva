@@ -1,3 +1,4 @@
+import { Autocomplete, ServiceIdeas } from '../../components/Autocomplete'
 import { useState, type FormEvent } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, type BusinessDetail } from '../../api'
@@ -39,7 +40,7 @@ export default function ProfileTab({ detail }: { detail: BusinessDetail }) {
         <h2>Basics</h2>
         <div className="grid">
           <Field label="Name" error={errs.name}><input disabled={!canEdit} value={basics.name} onChange={(e) => setBasics({ ...basics, name: e.target.value })} /></Field>
-          <Field label="Category"><input disabled={!canEdit} value={basics.primary_category} onChange={(e) => setBasics({ ...basics, primary_category: e.target.value })} /></Field>
+          <Field label="Category"><Autocomplete field="categories" disabled={!canEdit} value={basics.primary_category} onChange={(v) => setBasics({ ...basics, primary_category: v })} /></Field>
           <Field label="Website (optional)" error={errs.website_url}><input disabled={!canEdit} type="url" value={basics.website_url} onChange={(e) => setBasics({ ...basics, website_url: e.target.value })} /></Field>
         </div>
         <Field label="Description"><textarea disabled={!canEdit} rows={3} value={basics.description} onChange={(e) => setBasics({ ...basics, description: e.target.value })} /></Field>
@@ -59,7 +60,7 @@ export default function ProfileTab({ detail }: { detail: BusinessDetail }) {
         {canEdit && (
           <form className="row" onSubmit={(e) => { e.preventDefault(); addChild.mutate({ type: 'locations', body: loc }); setLoc({ city: '', address_line1: '' }) }}>
             <input style={{ flex: 2, minWidth: 160 }} placeholder="Street address" value={loc.address_line1} onChange={(e) => setLoc({ ...loc, address_line1: e.target.value })} />
-            <input style={{ flex: 1, minWidth: 120 }} placeholder="City" required value={loc.city} onChange={(e) => setLoc({ ...loc, city: e.target.value })} />
+            <div style={{ flex: 1, minWidth: 120 }}><Autocomplete field="cities" placeholder="City" required value={loc.city} onChange={(v) => setLoc({ ...loc, city: v })} aria-label="City" /></div>
             <button className="btn sm">Add location</button>
           </form>
         )}
@@ -94,6 +95,9 @@ export default function ProfileTab({ detail }: { detail: BusinessDetail }) {
             <input style={{ flex: 1 }} required placeholder="e.g. Bridal makeup" value={service} onChange={(e) => setService(e.target.value)} aria-label="Service name" />
             <button className="btn sm">Add service</button>
           </form>
+        )}
+        {canEdit && b.primary_category && (
+          <ServiceIdeas category={b.primary_category} existing={(b.services ?? []).map((x) => x.name)} onAdd={(name) => addChild.mutate({ type: 'services', body: { name } })} />
         )}
       </div>
     </div>

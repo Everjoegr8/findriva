@@ -70,6 +70,7 @@ class AiVisibility
 
         $status = match (true) {
             $questions->isEmpty() => 'nothing_to_check',
+            ! $business->workspace->aiEnabled() => 'workspace_off',
             ! $this->engine->isConfigured() => 'not_configured',
             $allowance <= 0 || $cap <= 0 => 'plan_excludes',
             default => null,
@@ -111,6 +112,7 @@ class AiVisibility
             'checked' => "Asked {$s['checked']} questions.".($s['over_allowance'] ? " {$s['over_allowance']} questions are beyond your plan's allowance and were not asked." : ''),
             'up_to_date' => 'Every question was asked recently. Answers refresh weekly; you can ask again tomorrow.',
             'nothing_to_check' => 'Add questions first, or create them from your tracked keywords.',
+            'workspace_off' => 'AI is switched off for this workspace, so no questions were asked. An owner or admin can turn it on in Workspace settings.',
             'not_configured' => 'AI answers are not checked yet because no AI assistant is connected.',
             'plan_excludes' => 'Your plan does not include AI answer checks.',
             'budget_exhausted' => "Today's AI answer budget for this workspace is used up. Asked {$s['checked']} questions; the rest will be asked next time.",

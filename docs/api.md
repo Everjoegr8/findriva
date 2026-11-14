@@ -45,7 +45,7 @@ ends without a renewal (checked daily at 02:00).
 | Method | Path | Permission |
 | --- | --- | --- |
 | GET/POST | `/workspaces` | any signed-in user (POST makes you owner) |
-| GET/PATCH | `/workspace` | view / `workspace.update` |
+| GET/PATCH | `/workspace` | view / `workspace.update` (`name`, `settings.ai_enabled`: off switches AI drafting and AI answer checks to their no-AI versions for this workspace; unknown settings are ignored) |
 | GET/POST | `/workspace/members` | view / `members.manage` (`email, role`) |
 | PATCH/DELETE | `/workspace/members/{id}` | `members.manage`; only owners manage owners; last owner protected |
 | GET | `/workspace/activity` | audit log for this workspace |
@@ -71,6 +71,7 @@ businesses, run audits, update actions), **viewer** (read only). Approving actio
 | PATCH/DELETE | `/businesses/{id}/assets/{assetId}` | `connection_state` may only be `not_connected` or `manual` |
 | POST | `/businesses/{id}/assets/{assetId}/scan` | re-check the public page |
 | POST | `/businesses/{id}/assets/import` | `file` (CSV or text, up to 200 KB) or `text`: every web link found is added (max 50); returns `added` and `skipped` with reasons |
+| GET | `/suggest/{categories,cities,services}?q=&category=` | rule-based autocomplete (no AI): this workspace's own values first, then fixed lists; at most 8 |
 | GET | `/businesses/{id}/export/{type}` | CSV download (UTF-8, Excel-ready): `actions, issues, keywords, rankings, reviews, profiles, search, ai-answers`. Cells starting with `= + - @` are written as text; empty means not measured. Logged as `export.downloaded` |
 
 ## Audits and issues

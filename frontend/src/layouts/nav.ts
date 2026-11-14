@@ -39,6 +39,7 @@ export const BUSINESS_NAV: NavGroup[] = [
 export const WORKSPACE_NAV: NavItem[] = [
   { label: 'Businesses', path: '/', icon: Building2, end: true, keywords: 'home all' },
   { label: 'Add a business', path: '/businesses/new', icon: Plus, keywords: 'new create onboarding' },
+  { label: 'Workspace settings', path: '/workspace', icon: Settings2, keywords: 'name ai artificial intelligence switch off' },
   { label: 'Plan and billing', path: '/billing', icon: CreditCard, keywords: 'subscription payment upgrade invoice' },
   { label: 'Account security', path: '/account', icon: ShieldCheck, keywords: 'password two-factor 2fa sessions' },
 ]

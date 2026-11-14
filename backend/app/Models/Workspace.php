@@ -50,6 +50,12 @@ class Workspace extends Model
         return $this->hasMany(Business::class);
     }
 
+    /** Owners and admins can switch every AI feature off for their workspace; the no-AI versions keep working. */
+    public function aiEnabled(): bool
+    {
+        return (bool) (($this->settings ?? [])['ai_enabled'] ?? true);
+    }
+
     /** @return array<string, int|null> */
     public function entitlements(): array
     {

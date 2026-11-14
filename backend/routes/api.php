@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\V1\LocalGridController;
 use App\Http\Controllers\Api\V1\PlatformController;
 use App\Http\Controllers\Api\V1\RankingController;
 use App\Http\Controllers\Api\V1\ResultsController;
+use App\Http\Controllers\Api\V1\SuggestController;
 use App\Http\Controllers\Api\V1\WordPressController;
 use App\Http\Controllers\Api\V1\WorkspaceController;
 use Illuminate\Support\Facades\Route;
@@ -74,6 +75,7 @@ Route::prefix('v1')->group(function () {
             Route::delete('workspace/members/{membership}', [WorkspaceController::class, 'removeMember']);
             Route::get('workspace/activity', [WorkspaceController::class, 'activity']);
             Route::get('coverage', [CoverageController::class, 'show']);
+            Route::get('suggest/{field}', [SuggestController::class, 'show'])->middleware('throttle:120,1');
             Route::get('workspace/billing', [BillingController::class, 'show']);
             Route::post('workspace/billing/checkout', [BillingController::class, 'checkout'])->middleware('verified');
             Route::post('workspace/billing/confirm', [BillingController::class, 'confirm']);

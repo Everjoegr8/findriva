@@ -48,7 +48,8 @@ class AppServiceProvider extends ServiceProvider
         // Which AI model each feature uses is chosen in Platform Control; the API key stays in the server environment.
         $this->app->bind(AnswerEngine::class, function ($app) {
             $ai = $app->make(PlatformConfig::class)->ai();
-            if (! $ai['answers_enabled'] || blank(config('services.anthropic.key'))) {
+            $workspaceOn = $app->make(CurrentWorkspace::class)->get()?->aiEnabled() ?? true;
+            if (! $ai['answers_enabled'] || ! $workspaceOn || blank(config('services.anthropic.key'))) {
                 return new NullAnswerEngine;
             }
             $m = PlatformConfig::MODELS[$ai['answers_model']];
@@ -59,8 +60,9 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->app->bind(ContentGenerator::class, function ($app) {
             $ai = $app->make(PlatformConfig::class)->ai();
+            $workspaceOn = $app->make(CurrentWorkspace::class)->get()?->aiEnabled() ?? true;
 
-            return $ai['content_engine'] === 'claude' && filled(config('services.anthropic.key'))
+            return $ai['content_engine'] === 'claude' && $workspaceOn && filled(config('services.anthropic.key'))
                 ? new ClaudeContentGenerator((string) config('services.anthropic.key'), $ai['content_model'])
                 : $app->make(TemplateContentGenerator::class);
         });
