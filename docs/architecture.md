@@ -23,7 +23,7 @@ The dashboard is a Vite SPA because it sits behind login and does not need to ra
 | Action Centre | `ActionTask`, `ActionStatus`, `ActionPlanner`, `ActionController` |
 | Coverage & usage | `config/findriva.php` plans, `UsageEvent`, `CoverageController` |
 | Audit log | `AuditLog`, `AuditLogger` (redacts secrets) |
-| Operations console | `Admin\AdminController` (platform staff only) |
+| Platform Control (`/control` in the app) | `Admin\*Controller` (platform staff only; the staff check runs before route binding so non-staff always get 403) |
 
 Controllers stay thin; logic lives in services. Provider interfaces for keyword, SERP, Search Console, CMS and social
 publishing arrive with those modules in Phases 2–3, following the same pattern as `HostResolver`.

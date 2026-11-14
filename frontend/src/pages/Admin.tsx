@@ -1,9 +1,11 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
-import { Link, NavLink, Route, Routes, useParams } from 'react-router-dom'
+import { Link, Route, Routes, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api'
 import { useAuth } from '../auth'
-import { Badge, Empty, ErrorState, Spinner, StatusBadge, fieldErrors, humanize } from '../ui'
+import { Building2, CheckCircle2, CreditCard, Gauge, Store, Users as UsersIcon, Zap } from 'lucide-react'
+import { Badge, Empty, ErrorState, PageTitle, Spinner, StatusBadge, fieldErrors, humanize } from '../ui'
+import { DiscoveryPath, type PathState } from '../components/DiscoveryPath'
 
 // ---------- types ----------
 interface Stats {
@@ -138,15 +140,35 @@ function Overview() {
   if (stats.isLoading) return <Spinner />
   if (stats.error) return <ErrorState error={stats.error} retry={() => stats.refetch()} />
   const s = stats.data!.data
+  const on = (n: number): PathState => (n > 0 ? 'live' : 'off')
   return (
     <div className="stack">
+      <PageTitle title="Platform overview" sub="Live numbers from the database, nothing estimated. Every staff action is recorded in the activity log." />
+      <section className="hero-panel" aria-label="Customer journey across the platform">
+        <div className="hero-copy">
+          <span className="eyebrow">Customer journey</span>
+          <h2>From sign-up to paying customer</h2>
+          <p>Each line lights up when real customers have reached that stage.</p>
+        </div>
+        <DiscoveryPath
+          hub={{ label: 'Findriva', detail: `${s.users.active_7d} active this week`, icon: Zap }}
+          nodes={[
+            { key: 'people', label: 'People', detail: `${s.users.total} signed up`, icon: UsersIcon, state: on(s.users.total), to: '/control/users' },
+            { key: 'confirmed', label: 'Confirmed email', detail: `${s.users.total - s.users.unverified} confirmed`, icon: CheckCircle2, state: on(s.users.total - s.users.unverified), to: '/control/users?filter=unverified' },
+            { key: 'ws', label: 'Workspaces', detail: `${s.workspaces} created`, icon: Building2, state: on(s.workspaces), to: '/control/workspaces' },
+            { key: 'biz', label: 'Businesses', detail: `${s.businesses} added`, icon: Store, state: on(s.businesses) },
+            { key: 'audits', label: 'Audits', detail: `${s.crawl_runs.completed_7d} done this week`, icon: Gauge, state: s.crawl_runs.running + s.crawl_runs.queued > 0 ? 'live' : s.crawl_runs.completed_7d > 0 ? 'partial' : 'off' },
+            { key: 'paying', label: 'Paying', detail: `${s.paying_workspaces} workspaces`, icon: CreditCard, state: on(s.paying_workspaces), to: '/control/payments' },
+          ]}
+        />
+      </section>
       <div className="grid">
-        <Stat label="People" value={s.users.total} hint={<>{s.users.new_7d} new this week · {s.users.active_7d} signed in this week</>} to="/admin/users" />
-        <Stat label="Paying workspaces" value={s.paying_workspaces} hint={<>of {s.workspaces} workspaces</>} to="/admin/workspaces" />
-        <Stat label="Monthly recurring revenue" value={naira(s.mrr)} hint={<>{naira(s.revenue_30d)} received in 30 days</>} to="/admin/payments" />
+        <Stat label="People" value={s.users.total} hint={<>{s.users.new_7d} new this week · {s.users.active_7d} signed in this week</>} to="/control/users" />
+        <Stat label="Paying workspaces" value={s.paying_workspaces} hint={<>of {s.workspaces} workspaces</>} to="/control/workspaces" />
+        <Stat label="Monthly recurring revenue" value={naira(s.mrr)} hint={<>{naira(s.revenue_30d)} received in 30 days</>} to="/control/payments" />
         <Stat label="Businesses" value={s.businesses} hint={<>{s.businesses_without_website} without a website</>} />
-        <Stat label="Need a nudge" value={s.users.unverified} hint="email not confirmed yet" to="/admin/users?filter=unverified" />
-        <Stat label="Failed background jobs" value={s.failed_jobs} hint={s.failed_jobs ? 'look at these' : 'all clear'} to="/admin/jobs" />
+        <Stat label="Need a nudge" value={s.users.unverified} hint="email not confirmed yet" to="/control/users?filter=unverified" />
+        <Stat label="Failed background jobs" value={s.failed_jobs} hint={s.failed_jobs ? 'look at these' : 'all clear'} to="/control/jobs" />
         <Stat label="Audits running / queued" value={`${s.crawl_runs.running} / ${s.crawl_runs.queued}`} hint={<>{s.crawl_runs.completed_7d} done, {s.crawl_runs.failed_7d} failed this week</>} />
         <Stat label="Provider spend (30 days)" value={`$${s.ai_spend_30d_usd.toFixed(2)}`} hint="DataForSEO and AI, estimated" />
       </div>
@@ -169,7 +191,7 @@ function Overview() {
           <div className="table-wrap"><table>
             <thead><tr><th>When</th><th>Website</th><th>Error</th><th /></tr></thead>
             <tbody>{runs.data.data.slice(0, 10).map((r) => (
-              <tr key={r.id}><td className="small">{when(r.created_at)}</td><td style={{ wordBreak: 'break-all' }}>{r.start_url}</td><td className="small">{r.error}</td><td><Link to={`/admin/workspaces/${r.workspace_id}`}>Open</Link></td></tr>
+              <tr key={r.id}><td className="small">{when(r.created_at)}</td><td style={{ wordBreak: 'break-all' }}>{r.start_url}</td><td className="small">{r.error}</td><td><Link to={`/control/workspaces/${r.workspace_id}`}>Open</Link></td></tr>
             ))}</tbody>
           </table></div>
         ) : <p className="small muted" style={{ margin: 0 }}>None. Good.</p>}
@@ -187,6 +209,7 @@ function Users() {
   const list = useQuery({ queryKey: ['admin', 'users', q, filter, page], queryFn: () => api<Page<UserRow>>(`/admin/users?search=${encodeURIComponent(q)}&filter=${filter}&page=${page}`) })
   return (
     <div className="stack">
+      <PageTitle title="People" sub="Everyone who has signed up. Search by name or email, resend confirmation, reset access or suspend an account." />
       <form className="row" onSubmit={(e) => { e.preventDefault(); setQ(search); setPage(1) }}>
         <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search name or email" aria-label="Search people" style={{ maxWidth: 320 }} />
         <select value={filter} onChange={(e) => { setFilter(e.target.value); setPage(1) }} aria-label="Filter" style={{ maxWidth: 220 }}>
@@ -203,7 +226,7 @@ function Users() {
             <thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Workspaces</th><th>Last sign-in</th><th>Joined</th></tr></thead>
             <tbody>{list.data.data.map((u) => (
               <tr key={u.id}>
-                <td><Link to={`/admin/users/${u.id}`}>{u.name}</Link></td>
+                <td><Link to={`/control/users/${u.id}`}>{u.name}</Link></td>
                 <td style={{ wordBreak: 'break-all' }}>{u.email}</td>
                 <td><UserBadges u={u} /></td>
                 <td>{u.workspaces_count}</td>
@@ -248,7 +271,7 @@ function UserDetail() {
   const err = fieldErrors(act.error).user?.[0] ?? fieldErrors(act.error).reason?.[0] ?? (act.error instanceof Error ? act.error.message : null)
   return (
     <div className="stack">
-      <div><Link to="/admin/users" className="small">← People</Link><h2 style={{ margin: '0.25rem 0' }}>{u.name}</h2><div className="row small muted"><span>{u.email}</span><UserBadges u={u} /></div></div>
+      <div><Link to="/control/users" className="small">← People</Link><h2 style={{ margin: '0.25rem 0' }}>{u.name}</h2><div className="row small muted"><span>{u.email}</span><UserBadges u={u} /></div></div>
       <div className="grid">
         <Stat label="Joined" value={day(u.created_at)} />
         <Stat label="Last sign-in" value={u.last_login_at ? day(u.last_login_at) : 'Never'} />
@@ -278,7 +301,7 @@ function UserDetail() {
       <div className="card stack">
         <h2 style={{ margin: 0 }}>Workspaces</h2>
         {u.workspaces.length === 0 ? <p className="small muted" style={{ margin: 0 }}>None.</p> : u.workspaces.map((w) => (
-          <div key={w.id} className="row between"><Link to={`/admin/workspaces/${w.id}`}>{w.name}</Link><span className="row small"><Badge>{humanize(w.role)}</Badge><Badge tone="brand">{humanize(w.plan)}</Badge><span className="muted">{humanize(w.billing_status)}</span></span></div>
+          <div key={w.id} className="row between"><Link to={`/control/workspaces/${w.id}`}>{w.name}</Link><span className="row small"><Badge>{humanize(w.role)}</Badge><Badge tone="brand">{humanize(w.plan)}</Badge><span className="muted">{humanize(w.billing_status)}</span></span></div>
         ))}
       </div>
       <Notes notes={u.notes} userId={u.id} onChange={refresh} />
@@ -295,6 +318,7 @@ function Workspaces() {
   const list = useQuery({ queryKey: ['admin', 'workspaces', q, plan, page], queryFn: () => api<Page<WorkspaceRow>>(`/admin/workspaces?search=${encodeURIComponent(q)}&plan=${plan}&page=${page}`) })
   return (
     <div className="stack">
+      <PageTitle title="Workspaces" sub="Every customer workspace with its plan and billing state. Search by name, number or member email." />
       <form className="row" onSubmit={(e) => { e.preventDefault(); setQ(search); setPage(1) }}>
         <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Workspace name, number or a member's email" aria-label="Search workspaces" style={{ maxWidth: 340 }} />
         <select value={plan} onChange={(e) => { setPlan(e.target.value); setPage(1) }} aria-label="Plan" style={{ maxWidth: 180 }}>
@@ -309,7 +333,7 @@ function Workspaces() {
           <table>
             <thead><tr><th>#</th><th>Name</th><th>Plan</th><th>Billing</th><th>Businesses</th><th>People</th><th>Created</th></tr></thead>
             <tbody>{list.data.data.map((w) => (
-              <tr key={w.id}><td>{w.id}</td><td><Link to={`/admin/workspaces/${w.id}`}>{w.name}</Link></td><td>{humanize(w.plan)}</td><td>{humanize(w.billing_status)}</td><td>{w.businesses_count}</td><td>{w.memberships_count}</td><td className="small">{day(w.created_at)}</td></tr>
+              <tr key={w.id}><td>{w.id}</td><td><Link to={`/control/workspaces/${w.id}`}>{w.name}</Link></td><td>{humanize(w.plan)}</td><td>{humanize(w.billing_status)}</td><td>{w.businesses_count}</td><td>{w.memberships_count}</td><td className="small">{day(w.created_at)}</td></tr>
             ))}</tbody>
           </table>
         </div>
@@ -351,7 +375,7 @@ function WorkspaceDetail() {
   const err = Object.values(fieldErrors(failure))[0]?.[0] ?? (failure instanceof Error ? failure.message : null)
   return (
     <div className="stack">
-      <div><Link to="/admin/workspaces" className="small">← Workspaces</Link><h2 style={{ margin: '0.25rem 0' }}>{w.name}</h2><div className="small muted">#{w.id} · {humanize(w.type)} · created {day(w.created_at)}</div></div>
+      <div><Link to="/control/workspaces" className="small">← Workspaces</Link><h2 style={{ margin: '0.25rem 0' }}>{w.name}</h2><div className="small muted">#{w.id} · {humanize(w.type)} · created {day(w.created_at)}</div></div>
 
       <div className="card stack">
         <h2 style={{ margin: 0 }}>Plan and billing</h2>
@@ -374,7 +398,7 @@ function WorkspaceDetail() {
         <div className="table-wrap"><table>
           <thead><tr><th>Name</th><th>Role</th><th>Status</th><th>Last sign-in</th></tr></thead>
           <tbody>{d.members.map((m) => (
-            <tr key={m.id}><td><Link to={`/admin/users/${m.id}`}>{m.name}</Link><div className="small muted" style={{ wordBreak: 'break-all' }}>{m.email}</div></td><td>{humanize(m.role)}</td>
+            <tr key={m.id}><td><Link to={`/control/users/${m.id}`}>{m.name}</Link><div className="small muted" style={{ wordBreak: 'break-all' }}>{m.email}</div></td><td>{humanize(m.role)}</td>
               <td><span className="row" style={{ gap: '0.3rem' }}>{m.disabled_at && <Badge tone="critical">Suspended</Badge>}{m.email_verified_at ? <Badge tone="ok">Confirmed</Badge> : <Badge tone="medium">Unconfirmed</Badge>}{m.mfa_enabled_at && <Badge>2-step</Badge>}</span></td>
               <td className="small">{when(m.last_login_at)}</td></tr>
           ))}</tbody>
@@ -433,6 +457,7 @@ function Payments() {
   const list = useQuery({ queryKey: ['admin', 'payments', status, page], queryFn: () => api<Page<Payment>>(`/admin/payments?status=${status}&page=${page}`) })
   return (
     <div className="stack">
+      <PageTitle title="Payments" sub="Every Paystack payment attempt, newest first." />
       <div className="row">
         <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1) }} aria-label="Payment status" style={{ maxWidth: 200 }}>
           <option value="">All payments</option><option value="success">Successful</option><option value="failed">Failed</option><option value="pending">Pending</option><option value="abandoned">Abandoned</option>
@@ -443,7 +468,7 @@ function Payments() {
         <div className="card table-wrap"><table>
           <thead><tr><th>When</th><th>Workspace</th><th>Plan</th><th>Amount</th><th>Status</th><th>Paystack reference</th></tr></thead>
           <tbody>{list.data.data.map((p) => (
-            <tr key={p.id}><td className="small">{when(p.paid_at ?? p.created_at)}</td><td><Link to={`/admin/workspaces/${p.workspace_id}`}>{p.workspace_name ?? `#${p.workspace_id}`}</Link></td><td>{humanize(p.plan)}</td><td>{naira(p.amount)}</td>
+            <tr key={p.id}><td className="small">{when(p.paid_at ?? p.created_at)}</td><td><Link to={`/control/workspaces/${p.workspace_id}`}>{p.workspace_name ?? `#${p.workspace_id}`}</Link></td><td>{humanize(p.plan)}</td><td>{naira(p.amount)}</td>
               <td><Badge tone={p.status === 'success' ? 'ok' : p.status === 'failed' ? 'critical' : ''}>{humanize(p.status)}</Badge></td><td className="small"><code>{p.reference}</code></td></tr>
           ))}</tbody>
         </table></div>
@@ -464,6 +489,7 @@ function Jobs() {
   const jobs = list.data!.data
   return (
     <div className="stack">
+      <PageTitle title="Failed jobs" />
       <p className="small muted" style={{ margin: 0 }}>Background work that stopped with an error: audits, imports from Google and Bing, rank checks and emails. Retry once the cause is fixed; remove ones that no longer matter.</p>
       {jobs.length === 0 ? <Empty title="No failed jobs">Everything in the background is running.</Empty> : (
         <div className="card table-wrap"><table>
@@ -484,6 +510,7 @@ function Log() {
   const list = useQuery({ queryKey: ['admin', 'logs', action, page], queryFn: () => api<Page<LogRow>>(`/admin/audit-logs?action=${encodeURIComponent(action)}&page=${page}`) })
   return (
     <div className="stack">
+      <PageTitle title="Activity log" sub="Everything staff and customers changed, newest first." />
       <div className="row">
         <select value={action} onChange={(e) => { setAction(e.target.value); setPage(1) }} aria-label="Kind of activity" style={{ maxWidth: 240 }}>
           <option value="">Everything</option><option value="auth.">Sign-ins and accounts</option><option value="admin.">Staff actions</option><option value="billing.">Billing</option>
@@ -497,33 +524,18 @@ function Log() {
   )
 }
 
-export default function AdminPage() {
-  const { user } = useAuth()
-  if (!user?.is_platform_admin) return <div className="card">This area is for Findriva operations staff.</div>
+/** Platform Control pages. The shell, guard and navigation live in layouts/ControlShell. */
+export default function AdminRoutes() {
   return (
-    <div className="stack">
-      <div>
-        <h1 style={{ marginBottom: 0 }}>Operations</h1>
-        <p className="small muted" style={{ margin: 0 }}>Everything about your customers in one place. Every staff action is recorded in the activity log.</p>
-      </div>
-      <nav className="tabs" style={{ marginBottom: 0 }}>
-        <NavLink end to="/admin">Overview</NavLink>
-        <NavLink to="/admin/users">People</NavLink>
-        <NavLink to="/admin/workspaces">Workspaces</NavLink>
-        <NavLink to="/admin/payments">Payments</NavLink>
-        <NavLink to="/admin/jobs">Failed jobs</NavLink>
-        <NavLink to="/admin/activity">Activity log</NavLink>
-      </nav>
-      <Routes>
-        <Route index element={<Overview />} />
-        <Route path="users" element={<Users />} />
-        <Route path="users/:id" element={<UserDetail />} />
-        <Route path="workspaces" element={<Workspaces />} />
-        <Route path="workspaces/:id" element={<WorkspaceDetail />} />
-        <Route path="payments" element={<Payments />} />
-        <Route path="jobs" element={<Jobs />} />
-        <Route path="activity" element={<Log />} />
-      </Routes>
-    </div>
+    <Routes>
+      <Route index element={<Overview />} />
+      <Route path="users" element={<Users />} />
+      <Route path="users/:id" element={<UserDetail />} />
+      <Route path="workspaces" element={<Workspaces />} />
+      <Route path="workspaces/:id" element={<WorkspaceDetail />} />
+      <Route path="payments" element={<Payments />} />
+      <Route path="jobs" element={<Jobs />} />
+      <Route path="activity" element={<Log />} />
+    </Routes>
   )
 }

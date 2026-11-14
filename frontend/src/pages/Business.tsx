@@ -1,8 +1,9 @@
-import { NavLink, Route, Routes, useParams } from 'react-router-dom'
+import { Route, Routes, useLocation, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { api, type BusinessDetail } from '../api'
 import { useAuth } from '../auth'
-import { ErrorState, Spinner, Badge } from '../ui'
+import { ErrorState, Spinner, Badge, PageTitle } from '../ui'
+import { BUSINESS_NAV } from '../layouts/nav'
 import OverviewTab from './business/Overview'
 import ActionsTab from './business/Actions'
 import AuditTab from './business/Audit'
@@ -26,41 +27,27 @@ export function useBusiness(id: string | undefined) {
 
 export default function BusinessPage() {
   const { id } = useParams()
+  const { pathname } = useLocation()
   const q = useBusiness(id)
   if (q.isLoading) return <Spinner />
   if (q.error) return <ErrorState error={q.error} retry={() => void q.refetch()} />
   if (!q.data) return null
   const b = q.data.data
-  const base = `/businesses/${b.id}`
+  const sub = pathname.replace(/^\/businesses\/[^/]+\/?/, '').split('/')[0]
+  const section = BUSINESS_NAV.flatMap((g) => g.items).find((n) => n.path === sub)
 
   return (
     <div>
-      <div className="row between no-print" style={{ marginBottom: '0.75rem' }}>
-        <div>
-          <h1 style={{ marginBottom: 0 }}>{b.name}</h1>
-          <div className="row small muted">
+      <PageTitle
+        eyebrow={section?.label ?? 'Overview'}
+        title={b.name}
+        sub={
+          <span className="row small" style={{ gap: '0.6rem' }}>
             {b.primary_category && <span>{b.primary_category}</span>}
             {b.has_website ? <a href={b.website_url!} target="_blank" rel="noreferrer noopener">{b.website_url}</a> : <Badge>No website</Badge>}
-          </div>
-        </div>
-      </div>
-      <nav className="tabs">
-        <NavLink end to={base}>Overview</NavLink>
-        <NavLink to={`${base}/results`}>Results</NavLink>
-        <NavLink to={`${base}/actions`}>Action Centre</NavLink>
-        <NavLink to={`${base}/audit`}>Discoverability audit</NavLink>
-        <NavLink to={`${base}/fixes`}>Ready-made fixes</NavLink>
-        <NavLink to={`${base}/keywords`}>Keywords</NavLink>
-        <NavLink to={`${base}/rankings`}>Rankings &amp; competitors</NavLink>
-        <NavLink to={`${base}/map-grid`}>Map grid</NavLink>
-        <NavLink to={`${base}/google-profile`}>Google profile &amp; reviews</NavLink>
-        <NavLink to={`${base}/ai-answers`}>AI answers</NavLink>
-        <NavLink to={`${base}/content`}>Content Studio</NavLink>
-        <NavLink to={`${base}/public-page`}>Public page</NavLink>
-        <NavLink to={`${base}/website`}>Website connection</NavLink>
-        <NavLink to={`${base}/profile`}>Business profile</NavLink>
-        <NavLink to={`${base}/assets`}>Profiles &amp; listings</NavLink>
-      </nav>
+          </span>
+        }
+      />
       <Routes>
         <Route index element={<OverviewTab detail={q.data} />} />
         <Route path="results" element={<ResultsTab business={b} />} />
