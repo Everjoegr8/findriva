@@ -14,6 +14,7 @@ function AuthFrame({ title, children }: { title: string; children: React.ReactNo
           <h1>{title}</h1>
           {children}
         </div>
+        <div className="auth-links small"><a href="/">About Findriva</a><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a></div>
       </div>
     </div>
   )
