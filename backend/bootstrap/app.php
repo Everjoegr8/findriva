@@ -22,6 +22,8 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         // Tenant must be known before route model binding so bound models are tenant-scoped.
         $middleware->prependToPriorityList(SubstituteBindings::class, ResolveWorkspace::class);
+        // Staff check runs before binding too, so non-staff get 403 everywhere and can't probe which ids exist.
+        $middleware->prependToPriorityList(SubstituteBindings::class, EnsurePlatformAdmin::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

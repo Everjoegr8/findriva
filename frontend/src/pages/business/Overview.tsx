@@ -2,7 +2,32 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { api, type BusinessDetail, type Overview } from '../../api'
 import { useAuth } from '../../auth'
+import { BarChart3, Globe, MapPin, Network, Search, Sparkles, Store } from 'lucide-react'
 import { ErrorState, Meter, Spinner, StatusBadge, humanize } from '../../ui'
+import { DiscoveryPath, type PathNode, type PathState } from '../../components/DiscoveryPath'
+
+const SOCIAL = ['instagram', 'facebook', 'tiktok', 'whatsapp', 'x', 'linkedin', 'youtube']
+const OFF = ['not_connected', 'not_set_up', 'not_started', 'revoked', 'expired', 'error', 'disconnected']
+const isOn = (status?: string) => !!status && !OFF.includes(status)
+
+/** One node per channel, lit only from the real state of that channel. */
+function channels(o: Overview): PathNode[] {
+  const p = o.profiles.by_platform
+  const social = SOCIAL.reduce((n, k) => n + (p[k] ?? 0), 0)
+  const gsc = o.search_engine_data.search_console?.status
+  const bing = o.search_engine_data.bing_webmaster?.status
+  const ranks = o.search_engine_data.rank_tracking?.status
+  const auditDone = o.website?.last_audit?.status === 'completed'
+  const st = (on: boolean, partial = false): PathState => (on ? 'live' : partial ? 'partial' : 'off')
+  return [
+    { key: 'google', label: 'Google Search', detail: isOn(gsc) ? 'Search Console connected' : 'Not connected yet', icon: Search, state: st(isOn(gsc)), to: 'results' },
+    { key: 'maps', label: 'Maps profile', detail: p.google_business_profile ? 'Profile added' : 'Not added yet', icon: MapPin, state: st(!!p.google_business_profile), to: 'google-profile' },
+    { key: 'website', label: 'Website', detail: o.website ? (auditDone ? 'Audited' : 'Audit pending') : 'No website (that is fine)', icon: Globe, state: st(!!o.website && auditDone, !!o.website), to: o.website ? 'audit' : 'public-page' },
+    { key: 'social', label: 'Social & WhatsApp', detail: social ? `${social} profile${social === 1 ? '' : 's'}` : 'None added yet', icon: Network, state: st(social > 0), to: 'assets' },
+    { key: 'bing', label: 'Bing', detail: isOn(bing) || p.bing_places ? 'Connected' : 'Not connected yet', icon: Store, state: st(isOn(bing) || !!p.bing_places), to: 'results' },
+    { key: 'ranks', label: 'Rank tracking', detail: ranks === 'tracking' ? 'Tracking keywords' : 'Not started', icon: BarChart3, state: st(ranks === 'tracking'), to: 'rankings' },
+  ]
+}
 
 const COMPONENT_LABEL: Record<string, string> = {
   name: 'Business name', category: 'Category', description: 'Description', location: 'Location or service area', phone: 'Phone or WhatsApp',
@@ -19,8 +44,19 @@ export default function OverviewTab({ detail }: { detail: BusinessDetail }) {
   const o = q.data!.data
   const c = o.identity_completeness
 
+  const nodes = channels(o)
+  const live = nodes.filter((n) => n.state === 'live').length
+
   return (
     <div className="stack">
+      <section className="hero-panel" aria-label="Where this business can be found">
+        <div className="hero-copy">
+          <span className="eyebrow">Discovery path</span>
+          <h2>{live} of {nodes.length} channels are live</h2>
+          <p>A moving signal means that channel is really connected. Grey dashed lines are the next places to show up.</p>
+        </div>
+        <DiscoveryPath hub={{ label: detail.data.name, detail: `Profile ${c.score}% complete`, icon: Sparkles }} nodes={nodes} />
+      </section>
       <div className="grid">
         <div className="card stat">
           <div className="label">Business profile completeness</div>

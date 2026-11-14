@@ -63,3 +63,16 @@ export function Meter({ value }: { value: number }) {
 export function humanize(s: string) {
   return s.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase())
 }
+
+export function PageTitle({ title, sub, actions, eyebrow }: { title: ReactNode; sub?: ReactNode; actions?: ReactNode; eyebrow?: ReactNode }) {
+  return (
+    <div className="page-title">
+      <div>
+        {eyebrow && <div className="eyebrow">{eyebrow}</div>}
+        <h1>{title}</h1>
+        {sub && <p className="muted">{sub}</p>}
+      </div>
+      {actions && <div className="row no-print">{actions}</div>}
+    </div>
+  )
+}
