@@ -11,6 +11,7 @@ use App\Models\ContentAsset;
 use App\Models\IndexNowSubmission;
 use App\Models\IntegrationConnection;
 use App\Models\Keyword;
+use App\Models\RankObservation;
 use App\Models\SearchPerformance;
 use App\Services\Identity\IdentityChecker;
 use App\Services\Publishing\PublicPage;
@@ -75,6 +76,42 @@ class ResultsController extends Controller
         ]]);
     }
 
+    /** Bing Webmaster Tools figures: daily totals (no position) and weekly query rows. */
+    public function bing(Request $request, Business $business): JsonResponse
+    {
+        $this->authorizePermission(Permission::View);
+        $this->ensureInWorkspace($business);
+        $days = (int) ($request->validate(['days' => ['nullable', 'integer', 'in:7,28,90']])['days'] ?? 28);
+        $c = IntegrationConnection::query()->where('business_id', $business->id)->where('provider', 'bing_webmaster')->first();
+        if (! $c || ! $c->data_through) {
+            return response()->json(['data' => ['connected' => (bool) $c, 'status' => $c?->status ?? 'not_connected', 'measured' => false]]);
+        }
+        $end = CarbonImmutable::parse($c->data_through);
+        $start = $end->subDays($days - 1);
+        $prevEnd = $start->subDay();
+        $prevStart = $prevEnd->subDays($days - 1);
+        $base = fn (string $grain) => SearchPerformance::query()->where('integration_connection_id', $c->id)->where('grain', $grain);
+        $sum = fn ($rows) => ['clicks' => (int) $rows->sum('clicks'), 'impressions' => (int) $rows->sum('impressions'), 'days' => $rows->count()];
+        $current = $base('total')->whereBetween('date', [$start->toDateString(), $end->toDateString()])->orderBy('date')->get(['date', 'clicks', 'impressions']);
+        // Query rows are weekly, so a period takes in every week that starts inside it.
+        $weeks = $base('query_week')->whereBetween('date', [$start->subDays(6)->toDateString(), $end->toDateString()])->get(['query', 'clicks', 'impressions', 'position']);
+        $queries = $weeks->groupBy('query')->map(fn ($g, $q) => [
+            'query' => $q, 'clicks' => (int) $g->sum('clicks'), 'impressions' => (int) $g->sum('impressions'),
+            'position' => round($g->sum(fn ($r) => $r->position * $r->impressions) / max(1, $g->sum('impressions')), 1),
+        ])->sortByDesc(fn ($r) => [$r['clicks'], $r['impressions']])->take(25)->values();
+
+        return response()->json(['data' => [
+            'connected' => true, 'measured' => true, 'source' => 'Bing Webmaster Tools', 'property' => $c->property,
+            'period' => ['start' => $start->toDateString(), 'end' => $end->toDateString(), 'days' => $days],
+            'last_synced_at' => $c->last_synced_at?->toIso8601String(),
+            'totals' => $sum($current),
+            'previous' => $sum($base('total')->whereBetween('date', [$prevStart->toDateString(), $prevEnd->toDateString()])->get()),
+            'series' => $current->map(fn ($r) => ['date' => $r->date->toDateString(), 'clicks' => $r->clicks, 'impressions' => $r->impressions])->values(),
+            'top_queries' => $queries,
+            'note' => 'Bing also powers Yahoo and DuckDuckGo results. Bing reports queries by week, so query figures can cover a few days either side of the period.',
+        ]]);
+    }
+
     public function report(Request $request, Business $business, IdentityChecker $identity): JsonResponse
     {
         $this->authorizePermission(Permission::View);
@@ -96,6 +133,16 @@ class ResultsController extends Controller
                 // A month still in progress is not compared with a full month; that would look like a drop.
                 'comparable' => $prev->count() > 0 && $rows->count() >= $prev->count()];
         }
+
+        $bingC = IntegrationConnection::query()->where('business_id', $business->id)->where('provider', 'bing_webmaster')->first();
+        $bing = null;
+        if ($bingC && $bingC->data_through) {
+            $rows = SearchPerformance::query()->where('integration_connection_id', $bingC->id)->where('grain', 'total')
+                ->whereBetween('date', [$start->toDateString(), $end->toDateString()])->get();
+            $bing = ['source' => 'Bing Webmaster Tools', 'property' => $bingC->property, 'days_measured' => $rows->count(),
+                'clicks' => (int) $rows->sum('clicks'), 'impressions' => (int) $rows->sum('impressions')];
+        }
+        $ranks = RankObservation::query()->where('business_id', $business->id)->whereBetween('checked_at', [$start, $end]);
 
         return response()->json(['data' => [
             'business' => ['id' => $business->id, 'name' => $business->name],
@@ -120,9 +167,12 @@ class ResultsController extends Controller
                 'urls_accepted' => (int) $in(IndexNowSubmission::query()->where('business_id', $business->id)->where('outcome', 'accepted'))->sum('url_count'),
             ],
             'search' => $search,
+            'bing' => $bing,
+            'rank_checks' => ['checks' => (clone $ranks)->count(), 'keywords' => (clone $ranks)->distinct('keyword_id')->count('keyword_id')],
             'not_measured' => array_values(array_filter([
-                $search ? null : 'Search clicks and impressions (connect Google Search Console)',
-                'Rankings from a rank-tracking provider (not connected)',
+                $search ? null : 'Google clicks and impressions (connect Google Search Console)',
+                $bing ? null : 'Bing clicks and impressions (connect Bing Webmaster Tools)',
+                (clone $ranks)->exists() ? null : 'Live search positions (no rank checks ran this month)',
             ])),
         ]]);
     }

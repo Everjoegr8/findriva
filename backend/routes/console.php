@@ -2,6 +2,7 @@
 
 use App\Jobs\CheckAiAnswers;
 use App\Jobs\CheckRankings;
+use App\Jobs\SyncBingWebmaster;
 use App\Jobs\SyncBusinessProfile;
 use App\Jobs\SyncSearchConsole;
 use App\Models\AiQuestion;
@@ -22,6 +23,13 @@ Schedule::call(function () {
         ->where('status', 'connected')->whereNotNull('property')
         ->each(fn ($c) => SyncSearchConsole::dispatch($c->workspace_id, $c->id));
 })->dailyAt('04:30')->name('sync-search-console')->onOneServer();
+
+// Nightly Bing Webmaster Tools import (Bing returns its whole window each time).
+Schedule::call(function () {
+    IntegrationConnection::withoutGlobalScopes()->where('provider', 'bing_webmaster')
+        ->where('status', 'connected')->whereNotNull('property')
+        ->each(fn ($c) => SyncBingWebmaster::dispatch($c->workspace_id, $c->id));
+})->dailyAt('04:40')->name('sync-bing-webmaster')->onOneServer();
 
 // Nightly Google Business Profile import (profile facts, reviews, daily actions).
 Schedule::call(function () {

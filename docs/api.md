@@ -160,6 +160,8 @@ Claim flags: `block` (placeholders, unknown phone/email/link/price, ranking prom
 | GET | `/businesses/{id}/local-grid` | recent map grid scans (summary each), `locations` with a map position, tracked `keywords`, `provider`, monthly point `allowance` and use |
 | POST | `/businesses/{id}/local-grid` | `keyword` or `keyword_id`, `location_id` or `lat`+`lng`, `size` 3\|5, `spacing_km` 0.3-5. 202 and queued; 422 if no provider, no plan points left, or a scan is already running |
 | GET | `/businesses/{id}/local-grid/{scanId}` | one scan with every point (row 0 is north; `position` or null if not in the top 20; top 3 results) and `leaders` |
+| POST | `/businesses/{id}/integrations/bing/connect` | owner/admin, verified email. Returns Bing's `authorization_url` (scope `webmaster.read`); Bing redirects to `GET /integrations/bing/callback` |
+| GET | `/businesses/{id}/bing-performance` | `?days=7\|28\|90`; Bing clicks and impressions vs previous period, daily series, top weekly queries with impression-weighted position |
 | GET | `/businesses/{id}/performance` | `?days=7\|28\|90`; totals vs previous period, top searches/pages, tracked keywords' measured positions |
 | GET | `/businesses/{id}/report` | `?month=YYYY-MM`; counted and measured figures only, with a `not_measured` list |
 

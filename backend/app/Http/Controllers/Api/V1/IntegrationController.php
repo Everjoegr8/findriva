@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\Permission;
 use App\Http\Controllers\Controller;
+use App\Jobs\SyncBingWebmaster;
 use App\Jobs\SyncBusinessProfile;
 use App\Jobs\SyncSearchConsole;
 use App\Models\Business;
@@ -14,6 +15,8 @@ use App\Models\SearchPerformance;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Services\AuditLogger;
+use App\Services\Integrations\BingWebmaster;
+use App\Services\Integrations\BingWebmasterImporter;
 use App\Services\Integrations\BusinessProfileImporter;
 use App\Services\Integrations\GoogleBusinessProfile;
 use App\Services\Integrations\GoogleSearchConsole;
@@ -41,6 +44,8 @@ class IntegrationController extends Controller
         private readonly AuditLogger $audit,
         private readonly GoogleBusinessProfile $profile,
         private readonly BusinessProfileImporter $profileImporter,
+        private readonly BingWebmaster $bing,
+        private readonly BingWebmasterImporter $bingImporter,
     ) {}
 
     public function index(Business $business): JsonResponse
@@ -58,6 +63,10 @@ class IntegrationController extends Controller
             'google_business_profile' => [
                 'available' => $this->profile->isConfigured(),
                 'connection' => ($gbp = IntegrationConnection::query()->where('business_id', $business->id)->where('provider', 'google_business_profile')->first()) ? $this->present($gbp) : null,
+            ],
+            'bing_webmaster' => [
+                'available' => $this->bing->isConfigured(),
+                'connection' => ($bing = IntegrationConnection::query()->where('business_id', $business->id)->where('provider', 'bing_webmaster')->first()) ? $this->present($bing) : null,
             ],
             'indexnow' => $domain ? [
                 'host' => $domain->canonical_host ?: $domain->domain,
@@ -102,6 +111,67 @@ class IntegrationController extends Controller
         ], now()->addMinutes(10));
 
         return response()->json(['data' => ['authorization_url' => $this->profile->authorizationUrl($state)]]);
+    }
+
+    public function connectBing(Request $request, Business $business): JsonResponse
+    {
+        $this->authorizePermission(Permission::ActionApprove);
+        $this->ensureInWorkspace($business);
+        if (! $this->bing->isConfigured()) {
+            throw ValidationException::withMessages(['bing' => 'Bing Webmaster Tools is not set up on this Findriva installation yet.']);
+        }
+        $state = Str::random(48);
+        Cache::put('oauth:bing:'.hash('sha256', $state), [
+            'user_id' => $request->user()->id, 'workspace_id' => $this->workspace()->id, 'business_id' => $business->id,
+        ], now()->addMinutes(10));
+
+        return response()->json(['data' => ['authorization_url' => $this->bing->authorizationUrl($state)]]);
+    }
+
+    /** Bing redirects the browser here. As with Google, the one-time state is the proof of who asked. */
+    public function bingCallback(Request $request, CurrentWorkspace $tenant): RedirectResponse
+    {
+        $app = rtrim(config('findriva.app_url'), '/');
+        $ctx = $request->filled('state') ? Cache::pull('oauth:bing:'.hash('sha256', (string) $request->query('state'))) : null;
+        if (! $ctx) {
+            return redirect()->away($app.'/?integration_error=expired');
+        }
+        $back = $app.'/businesses/'.$ctx['business_id'].'/results';
+        if ($request->filled('error') || ! $request->filled('code')) {
+            return redirect()->away($back.'?integration_error=declined');
+        }
+        $workspace = Workspace::query()->findOrFail($ctx['workspace_id']);
+        $user = User::query()->findOrFail($ctx['user_id']);
+        if (! $user->canIn($workspace, Permission::ActionApprove)) {
+            return redirect()->away($back.'?integration_error=forbidden');
+        }
+
+        return $tenant->runAs($workspace, function () use ($request, $ctx, $user, $back) {
+            $business = Business::query()->findOrFail($ctx['business_id']);
+            try {
+                $token = $this->bing->exchangeCode((string) $request->query('code'));
+                $c = IntegrationConnection::query()->firstOrNew(['business_id' => $business->id, 'provider' => 'bing_webmaster']);
+                $c->fill([
+                    'connected_by' => $user->id,
+                    'access_token' => $token['access_token'],
+                    'refresh_token' => $token['refresh_token'] ?? $c->refresh_token,
+                    'token_expires_at' => now()->addSeconds((int) ($token['expires_in'] ?? 3600)),
+                    'scopes' => [$this->bing->scope()],
+                    'last_error' => null,
+                ])->save();
+                $sites = $this->bing->sites($c);
+                $site = $this->bingImporter->matchSite($sites, $business->website_url);
+                $c->update(['available_properties' => $sites, 'property' => $site, 'status' => $site ? 'connected' : 'needs_property']);
+            } catch (IntegrationException) {
+                return redirect()->away($back.'?integration_error=bing');
+            }
+            $this->audit->log('integration.connected', $c, null, ['provider' => 'bing_webmaster', 'property' => $site]);
+            if ($site) {
+                SyncBingWebmaster::dispatch($c->workspace_id, $c->id);
+            }
+
+            return redirect()->away($back.'?connected=bing');
+        });
     }
 
     /** Google redirects the browser here. There is no bearer token, so the one-time state is the proof. */
@@ -212,6 +282,17 @@ class IntegrationController extends Controller
 
             return response()->json(['data' => $this->present($connection->fresh())]);
         }
+        if ($connection->provider === 'bing_webmaster') {
+            if (! collect($connection->available_properties ?? [])->where('verified', true)->contains('site_url', $data['property'])) {
+                throw ValidationException::withMessages(['property' => 'Choose one of the verified sites in this Bing account.']);
+            }
+            $connection->update(['property' => $data['property'], 'status' => 'connected', 'data_through' => null]);
+            SearchPerformance::query()->where('integration_connection_id', $connection->id)->delete();
+            SyncBingWebmaster::dispatch($connection->workspace_id, $connection->id);
+            $this->audit->log('integration.property_selected', $connection, null, ['property' => $data['property']]);
+
+            return response()->json(['data' => $this->present($connection->fresh())]);
+        }
         if (! collect($connection->available_properties ?? [])->contains('site_url', $data['property'])) {
             throw ValidationException::withMessages(['property' => 'Choose one of the properties this Google account can see.']);
         }
@@ -229,11 +310,13 @@ class IntegrationController extends Controller
         $this->authorizePermission(Permission::AuditRun);
         $this->ensureBelongs($connection, $business);
         if (! $connection->property || $connection->status === 'revoked') {
-            throw ValidationException::withMessages(['connection' => 'Reconnect Google first.']);
+            throw ValidationException::withMessages(['connection' => $connection->provider === 'bing_webmaster' ? 'Reconnect Bing first.' : 'Reconnect Google first.']);
         }
-        $connection->provider === 'google_business_profile'
-            ? SyncBusinessProfile::dispatch($connection->workspace_id, $connection->id)
-            : SyncSearchConsole::dispatch($connection->workspace_id, $connection->id);
+        match ($connection->provider) {
+            'google_business_profile' => SyncBusinessProfile::dispatch($connection->workspace_id, $connection->id),
+            'bing_webmaster' => SyncBingWebmaster::dispatch($connection->workspace_id, $connection->id),
+            default => SyncSearchConsole::dispatch($connection->workspace_id, $connection->id),
+        };
 
         return response()->json(['data' => ['queued' => true]], 202);
     }
@@ -243,9 +326,10 @@ class IntegrationController extends Controller
         $this->authorizePermission(Permission::ActionApprove);
         $this->ensureBelongs($connection, $business);
         // Google revokes the whole grant for this Google account, so keep it while another connection still uses it.
+        // Bing has no revoke endpoint: we delete our tokens, and the customer can remove Findriva in Bing's settings.
         $shared = IntegrationConnection::query()->withoutGlobalScopes()->where('id', '!=', $connection->id)
             ->where('account_email', $connection->account_email)->whereNotNull('account_email')->where('status', '!=', 'revoked')->exists();
-        if (! $shared) {
+        if (! $shared && $connection->provider !== 'bing_webmaster') {
             $this->google->revoke($connection);
         }
         $this->audit->log('integration.disconnected', $connection, null, ['provider' => $connection->provider, 'property' => $connection->property]);
@@ -302,7 +386,7 @@ class IntegrationController extends Controller
             'available_properties' => $c->available_properties ?? [], 'last_synced_at' => $c->last_synced_at?->toIso8601String(),
             'data_through' => $c->data_through?->toDateString(), 'last_error' => $c->last_error,
             // Business Profile can also post review replies, and only after an owner or admin approves each one.
-            'read_only' => $c->provider === 'google_search_console',
+            'read_only' => in_array($c->provider, ['google_search_console', 'bing_webmaster'], true),
         ];
     }
 }

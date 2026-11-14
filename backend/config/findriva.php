@@ -113,6 +113,12 @@ return [
         'max_pages' => 4,
     ],
 
+    'bing_webmaster' => [
+        'scope' => 'webmaster.read',
+        // Bing keeps about six months of daily traffic and weekly query data.
+        'max_query_rows' => 5000,
+    ],
+
     'rankings' => [
         // dataforseo, or empty for "not measured". Defaults to the keyword provider so one account covers both.
         'provider' => env('FINDRIVA_SERP_PROVIDER', env('FINDRIVA_KEYWORD_PROVIDER')),

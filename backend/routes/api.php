@@ -36,6 +36,7 @@ Route::prefix('v1')->group(function () {
 
     // Google sends the browser back here after consent. Authenticated by the one-time state value.
     Route::get('integrations/google/callback', [IntegrationController::class, 'googleCallback'])->middleware('throttle:auth');
+    Route::get('integrations/bing/callback', [IntegrationController::class, 'bingCallback'])->middleware('throttle:auth');
 
     Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::post('auth/logout', [AuthController::class, 'logout']);
@@ -112,6 +113,8 @@ Route::prefix('v1')->group(function () {
                 Route::get('integrations', [IntegrationController::class, 'index']);
                 Route::post('integrations/google/connect', [IntegrationController::class, 'connectGoogle'])->middleware('verified');
                 Route::post('integrations/google-business/connect', [IntegrationController::class, 'connectBusinessProfile'])->middleware('verified');
+                Route::post('integrations/bing/connect', [IntegrationController::class, 'connectBing'])->middleware('verified');
+                Route::get('bing-performance', [ResultsController::class, 'bing']);
                 Route::patch('integrations/{connection}', [IntegrationController::class, 'selectProperty']);
                 Route::post('integrations/{connection}/sync', [IntegrationController::class, 'sync'])->middleware('throttle:research');
                 Route::delete('integrations/{connection}', [IntegrationController::class, 'disconnect']);

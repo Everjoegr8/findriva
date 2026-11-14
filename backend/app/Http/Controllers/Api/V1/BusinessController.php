@@ -9,6 +9,7 @@ use App\Http\Requests\OnboardBusinessRequest;
 use App\Http\Resources\BusinessResource;
 use App\Models\Business;
 use App\Models\IntegrationConnection;
+use App\Models\RankObservation;
 use App\Models\SearchPerformance;
 use App\Services\Audit\AuditRunner;
 use App\Services\AuditLogger;
@@ -152,7 +153,10 @@ class BusinessController extends Controller
         return [
             'search_console' => $gsc,
             'indexnow' => ['status' => $domain?->indexnow_verified_at ? 'key_verified' : 'not_set_up'],
-            'rank_tracking' => ['status' => 'not_started', 'note' => 'Rank observations need a licensed data provider; we never invent positions.'],
+            'bing_webmaster' => ['status' => IntegrationConnection::query()->where('business_id', $business->id)->where('provider', 'bing_webmaster')->value('status') ?? 'not_connected'],
+            'rank_tracking' => RankObservation::query()->where('business_id', $business->id)->exists()
+                ? ['status' => 'tracking']
+                : ['status' => 'not_started', 'note' => 'Live positions come from a licensed data provider once keywords are tracked; we never invent positions.'],
         ];
     }
 }

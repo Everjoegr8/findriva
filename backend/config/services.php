@@ -43,6 +43,13 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI', rtrim((string) env('APP_URL', 'http://localhost'), '/').'/api/v1/integrations/google/callback'),
     ],
 
+    // Bing Webmaster Tools reports (read-only OAuth). Create the client in Bing Webmaster Tools: Settings, API access, OAuth client.
+    'bing_webmaster' => [
+        'client_id' => env('BING_WEBMASTER_CLIENT_ID'),
+        'client_secret' => env('BING_WEBMASTER_CLIENT_SECRET'),
+        'redirect' => env('BING_WEBMASTER_REDIRECT_URI', rtrim((string) env('APP_URL', 'http://localhost'), '/').'/api/v1/integrations/bing/callback'),
+    ],
+
     'paystack' => [
         'secret_key' => env('PAYSTACK_SECRET_KEY'),
         'public_key' => env('PAYSTACK_PUBLIC_KEY'),
