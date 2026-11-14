@@ -5,6 +5,7 @@ import { Spinner } from './ui'
 import { ForgotPasswordPage, LoginPage, RegisterPage, ResetPasswordPage } from './pages/Auth'
 import AccountPage from './pages/Account'
 import BillingPage from './pages/Billing'
+import WorkspaceSettingsPage from './pages/WorkspaceSettings'
 import BusinessesPage from './pages/Businesses'
 import OnboardingPage from './pages/Onboarding'
 import BusinessPage from './pages/Business'
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="/businesses/new" element={<OnboardingPage />} />
         <Route path="/businesses/:id/*" element={<BusinessPage />} />
         <Route path="/billing" element={<BillingPage />} />
+        <Route path="/workspace" element={<WorkspaceSettingsPage />} />
         <Route path="/account" element={<AccountPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

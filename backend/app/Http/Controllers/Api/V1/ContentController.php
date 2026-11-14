@@ -27,6 +27,8 @@ class ContentController extends Controller
             'data' => $assets->map(fn ($a) => $this->present($a, false)),
             'types' => collect(ContentTypes::TYPES)->map(fn ($t, $k) => ['type' => $k, 'label' => $t['label'], 'use' => $t['use'], 'max_chars' => $t['max_chars'], 'needs' => $t['needs'] ?? null, 'can_apply' => $t['applies_to'] !== null])->values(),
             'ai_available' => $this->studio->aiAvailable(),
+            // Why AI drafting is unavailable: switched off by this workspace, or not offered on the platform.
+            'ai_off_reason' => $this->studio->aiAvailable() ? null : ($business->workspace->aiEnabled() ? 'platform' : 'workspace'),
         ]);
     }
 

@@ -198,8 +198,8 @@ a.dp-node:hover { background: rgba(255, 255, 255, 0.06); }
 }
 @media (max-width: 960px) {
   .app { grid-template-columns: minmax(0, 1fr); }
-  .side { position: fixed; z-index: 80; left: 0; top: 0; bottom: 0; width: 280px; max-width: 86vw; transform: translateX(-100%); transition: transform 0.22s ease; box-shadow: 20px 0 40px rgba(0, 0, 0, 0.3); }
-  .app.nav-open .side { transform: none; }
+  .side { position: fixed; z-index: 80; left: 0; top: 0; bottom: 0; width: 280px; max-width: 86vw; transform: translateX(-100%); transition: transform 0.22s ease; }
+  .app.nav-open .side { transform: none; box-shadow: 20px 0 40px rgba(0, 0, 0, 0.3); }
   .side-scrim { position: fixed; inset: 0; z-index: 70; background: rgba(7, 13, 26, 0.5); }
   .side-close { display: inline-grid; position: absolute; right: 10px; top: 14px; color: #B8C4D6; }
   .menu-btn { display: inline-grid; margin-left: -8px; }
@@ -291,3 +291,11 @@ a.dp-node:hover { background: rgba(255, 255, 255, 0.06); }
 .impact.high { background: var(--critical); } .impact.medium { background: #E3A008; } .impact.low { background: var(--mint); }
 @media (max-width: 1180px) { .overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .next-actions { grid-column: 1 / -1; } }
 @media (max-width: 720px) { .overview-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- autocomplete ---------- */
+.ac { position: relative; width: 100%; }
+.ac-list { position: absolute; z-index: 40; top: calc(100% + 4px); left: 0; right: 0; list-style: none; margin: 0; padding: 4px; max-height: 260px; overflow: auto;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 14px 30px -12px rgba(11, 20, 38, 0.3); }
+.ac-list li { padding: 7px 10px; border-radius: 7px; cursor: pointer; font-size: 0.9rem; font-weight: 400; }
+.ac-list li.on { background: var(--brand-soft); color: var(--brand-strong); }
+.ai-badge { width: 38px; height: 38px; flex: none; border-radius: 11px; display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, var(--signal), var(--mint)); }

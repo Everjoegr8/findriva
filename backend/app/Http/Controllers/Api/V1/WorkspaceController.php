@@ -62,7 +62,15 @@ class WorkspaceController extends Controller
         $data = $request->validate([
             'name' => ['sometimes', 'string', 'max:120'],
             'settings' => ['sometimes', 'array'],
+            'settings.ai_enabled' => ['sometimes', 'boolean'],
         ]);
+        // Only known settings are stored, merged into what is already there.
+        if (isset($data['settings'])) {
+            $data['settings'] = array_merge($w->settings ?? [], array_intersect_key($data['settings'], ['ai_enabled' => true]));
+            if (isset($data['settings']['ai_enabled'])) {
+                $data['settings']['ai_enabled'] = (bool) $data['settings']['ai_enabled'];
+            }
+        }
         $before = $w->only(array_keys($data));
         $w->update($data);
         $this->audit->log('workspace.updated', $w, $before, $data);

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, type Business } from '../../api'
@@ -12,7 +13,7 @@ interface ContentItem {
   versions?: { version: number; generator: string; created_at: string; flag_count: number }[]
 }
 interface ContentType { type: string; label: string; use: string; max_chars: number; needs: string | null; can_apply: boolean }
-interface ListResponse { data: ContentItem[]; types: ContentType[]; ai_available: boolean }
+interface ListResponse { data: ContentItem[]; types: ContentType[]; ai_available: boolean; ai_off_reason: 'workspace' | 'platform' | null }
 
 function firstError(e: unknown): string | null {
   const errs = fieldErrors(e)
@@ -120,7 +121,9 @@ export default function ContentTab({ business }: { business: Business }) {
           <div className="row between">
             {d.ai_available ? (
               <label className="row small" style={{ gap: '0.4rem' }}><input type="checkbox" style={{ width: 'auto' }} checked={useAi} onChange={(e) => setUseAi(e.target.checked)} /> Let AI polish the wording (same facts, same checks)</label>
-            ) : <span className="small muted">Facts-only drafting. AI polishing can be switched on by the workspace owner.</span>}
+            ) : d.ai_off_reason === 'workspace'
+              ? <span className="small muted">Facts-only drafting. AI is switched off for this workspace; owners can turn it on in <Link to="/workspace">Workspace settings</Link>.</span>
+              : <span className="small muted">Facts-only drafting, written only from your approved business details.</span>}
             <button className="btn primary" disabled={create.isPending} onClick={() => create.mutate()}>{create.isPending ? 'Writing…' : 'Write draft'}</button>
           </div>
           {firstError(create.error) && !fieldErrors(create.error).service_id && <p className="error-text">{firstError(create.error)}</p>}
