@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\V1\IntegrationController;
 use App\Http\Controllers\Api\V1\LocalGridController;
 use App\Http\Controllers\Api\V1\RankingController;
 use App\Http\Controllers\Api\V1\ResultsController;
+use App\Http\Controllers\Api\V1\WordPressController;
 use App\Http\Controllers\Api\V1\WorkspaceController;
 use Illuminate\Support\Facades\Route;
 
@@ -37,6 +38,10 @@ Route::prefix('v1')->group(function () {
     // Google sends the browser back here after consent. Authenticated by the one-time state value.
     Route::get('integrations/google/callback', [IntegrationController::class, 'googleCallback'])->middleware('throttle:auth');
     Route::get('integrations/bing/callback', [IntegrationController::class, 'bingCallback'])->middleware('throttle:auth');
+    // Findriva Connect plugin for WordPress: pairing code in, site token out; then the token reads the approved manifest.
+    Route::post('connect/wordpress/pair', [WordPressController::class, 'pair'])->middleware('throttle:auth');
+    Route::get('connect/wordpress/manifest', [WordPressController::class, 'manifest'])->middleware('throttle:120,1');
+    Route::get('connect/wordpress/plugin.zip', [WordPressController::class, 'plugin']);
 
     Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::post('auth/logout', [AuthController::class, 'logout']);
@@ -115,6 +120,10 @@ Route::prefix('v1')->group(function () {
                 Route::post('integrations/google-business/connect', [IntegrationController::class, 'connectBusinessProfile'])->middleware('verified');
                 Route::post('integrations/bing/connect', [IntegrationController::class, 'connectBing'])->middleware('verified');
                 Route::get('bing-performance', [ResultsController::class, 'bing']);
+                Route::get('wordpress', [WordPressController::class, 'show']);
+                Route::post('wordpress/pairing-code', [WordPressController::class, 'pairingCode'])->middleware('verified');
+                Route::post('wordpress/publish', [WordPressController::class, 'publish'])->middleware('verified');
+                Route::delete('wordpress', [WordPressController::class, 'disconnect']);
                 Route::patch('integrations/{connection}', [IntegrationController::class, 'selectProperty']);
                 Route::post('integrations/{connection}/sync', [IntegrationController::class, 'sync'])->middleware('throttle:research');
                 Route::delete('integrations/{connection}', [IntegrationController::class, 'disconnect']);

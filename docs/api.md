@@ -192,6 +192,20 @@ Imports only finished days (`dataState: final`, 3-day lag), stores daily totals 
 Search Console property marks the domain verified (`verification_method: google_search_console`). Published public
 pages are announced to IndexNow with `FINDRIVA_INDEXNOW_KEY` when it is set.
 
+## WordPress website (Findriva Connect plugin)
+In the app (business routes): `GET /businesses/{id}/wordpress` returns the connection, the publishable `items`
+(`jsonld`, `meta`), a `preview` built from approved facts, `outdated` (facts changed since the last publish) and the
+plugin download. `POST .../wordpress/pairing-code` (owner/admin, verified email; the business needs a website) returns a
+one-time `FDV-XXXX-XXXX` code valid for 30 minutes. `POST .../wordpress/publish` (`items: []`, owner/admin) freezes the
+manifest the plugin will print; an empty list clears the site. `DELETE .../wordpress` disconnects (the token stops working).
+
+For the plugin (no sign-in): `POST /connect/wordpress/pair` (`code, site_url, plugin_version?, wp_version?`) checks the
+site's host against the business website (ignoring `www.`) and returns a site token once; only its SHA-256 hash is
+stored. `GET /connect/wordpress/manifest` with `Authorization: Bearer <token>` returns `{version, homepage:{jsonld?, meta?}}`
+(401 when unknown or disconnected). `GET /connect/wordpress/plugin.zip` is built from `backend/resources/wordpress`
+(needs the PHP zip extension). The plugin prints on the front page only, skips meta tags when a known SEO plugin is
+active, and never receives write access to Findriva.
+
 ## Operations (platform staff)
 `GET /admin/stats`, `GET /admin/workspaces`, `PATCH /admin/workspaces/{id}` (`plan, billing_status`),
 `GET /admin/crawl-runs?status=`, `GET /admin/audit-logs?workspace_id=&action=`.

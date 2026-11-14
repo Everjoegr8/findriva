@@ -17,6 +17,7 @@ import RankingsTab from './business/Rankings'
 import MapGridTab from './business/MapGrid'
 import GoogleProfileTab from './business/GoogleProfile'
 import AiAnswersTab from './business/AiAnswers'
+import WordPressTab from './business/WordPress'
 
 export function useBusiness(id: string | undefined) {
   const { workspaceId } = useAuth()
@@ -56,6 +57,7 @@ export default function BusinessPage() {
         <NavLink to={`${base}/ai-answers`}>AI answers</NavLink>
         <NavLink to={`${base}/content`}>Content Studio</NavLink>
         <NavLink to={`${base}/public-page`}>Public page</NavLink>
+        <NavLink to={`${base}/website`}>Website connection</NavLink>
         <NavLink to={`${base}/profile`}>Business profile</NavLink>
         <NavLink to={`${base}/assets`}>Profiles &amp; listings</NavLink>
       </nav>
@@ -72,6 +74,7 @@ export default function BusinessPage() {
         <Route path="ai-answers" element={<AiAnswersTab business={b} />} />
         <Route path="content" element={<ContentTab business={b} />} />
         <Route path="public-page" element={<PublicPageTab business={b} />} />
+        <Route path="website" element={<WordPressTab business={b} />} />
         <Route path="profile" element={<ProfileTab detail={q.data} />} />
         <Route path="assets" element={<AssetsTab business={b} />} />
       </Routes>

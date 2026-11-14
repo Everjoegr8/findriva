@@ -123,6 +123,7 @@ th { color: var(--muted); font-weight: 600; font-size: 0.82rem; }
 .center-page { min-height: 100vh; display: grid; place-items: center; padding: 1rem 16px; }
 .auth-card { width: 100%; max-width: 420px; }
 .notice { padding: 0.7rem 0.9rem; border-radius: 8px; background: var(--brand-soft); color: var(--brand-strong); font-size: 0.9rem; }
+.pairing-code { font-size: 1.15rem; font-weight: 700; letter-spacing: 0.08em; padding: 0.35rem 0.6rem; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--border); user-select: all; }
 .notice.warn { background: var(--medium-soft); color: var(--medium); }
 .empty { text-align: center; padding: 2.5rem 1rem; color: var(--muted); }
 .spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--brand); border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
