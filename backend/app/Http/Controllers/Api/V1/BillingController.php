@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BillingTransaction;
 use App\Services\Billing\BillingService;
 use App\Services\Billing\Paystack;
+use App\Services\Platform\PlatformConfig;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -19,7 +20,7 @@ class BillingController extends Controller
     {
         $this->authorizePermission(Permission::View);
         $ws = $this->workspace();
-        $plans = collect(config('findriva.plans'))->map(fn ($p, $key) => [
+        $plans = collect(app(PlatformConfig::class)->plans())->map(fn ($plan, $key) => ['label' => $plan['label']] + $plan['limits'])->map(fn ($p, $key) => [
             'key' => $key, 'label' => $p['label'], 'price' => $this->billing->prices()[$key] ?? 0,
             'businesses' => $p['businesses'], 'locations_per_business' => $p['locations_per_business'],
             'pages_per_crawl' => $p['pages_per_crawl'], 'crawls_per_month' => $p['crawls_per_month'],
@@ -39,7 +40,7 @@ class BillingController extends Controller
     public function checkout(Request $request): JsonResponse
     {
         $this->authorizePermission(Permission::BillingManage);
-        $data = $request->validate(['plan' => ['required', Rule::in(array_keys(config('findriva.billing.prices')))]]);
+        $data = $request->validate(['plan' => ['required', Rule::in(array_keys($this->billing->prices()))]]);
 
         return response()->json(['data' => $this->billing->checkout($this->workspace(), $request->user(), $data['plan'])]);
     }

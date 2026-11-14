@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\LocalGridScan;
 use App\Models\Workspace;
+use App\Services\Platform\PlatformConfig;
 use App\Services\Rankings\LocalGrid;
 use App\Support\Tenancy\CurrentWorkspace;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -26,7 +27,9 @@ class RunLocalGridScan implements ShouldQueue
     {
         $tenant->runAs(Workspace::findOrFail($this->workspaceId), function () use ($grid) {
             $scan = LocalGridScan::query()->find($this->scanId);
-            if ($scan && $scan->status === 'queued') {
+            if ($scan && $scan->status === 'queued' && ! app(PlatformConfig::class)->moduleOn('map_grid')) {
+                $scan->forceFill(['status' => 'failed', 'error' => 'Map grid scans are switched off on Findriva right now.'])->save();
+            } elseif ($scan && $scan->status === 'queued') {
                 $grid->run($scan);
             }
         });

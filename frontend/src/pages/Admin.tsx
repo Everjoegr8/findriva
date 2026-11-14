@@ -6,6 +6,7 @@ import { useAuth } from '../auth'
 import { Building2, CheckCircle2, CreditCard, Gauge, Store, Users as UsersIcon, Zap } from 'lucide-react'
 import { Badge, Empty, ErrorState, PageTitle, Spinner, StatusBadge, fieldErrors, humanize } from '../ui'
 import { DiscoveryPath, type PathState } from '../components/DiscoveryPath'
+import { AiPage, ModulesPage, PlansPage, ProvidersPage, SettingsPage } from './control/Config'
 
 // ---------- types ----------
 interface Stats {
@@ -536,6 +537,11 @@ export default function AdminRoutes() {
       <Route path="payments" element={<Payments />} />
       <Route path="jobs" element={<Jobs />} />
       <Route path="activity" element={<Log />} />
+      <Route path="plans" element={<PlansPage />} />
+      <Route path="modules" element={<ModulesPage />} />
+      <Route path="providers" element={<ProvidersPage />} />
+      <Route path="ai" element={<AiPage />} />
+      <Route path="settings" element={<SettingsPage />} />
     </Routes>
   )
 }

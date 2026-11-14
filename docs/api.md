@@ -206,7 +206,7 @@ stored. `GET /connect/wordpress/manifest` with `Authorization: Bearer <token>` r
 (needs the PHP zip extension). The plugin prints on the front page only, skips meta tags when a known SEO plugin is
 active, and never receives write access to Findriva.
 
-## Operations (platform staff)
+## Platform Control (platform staff, `/control` in the app)
 Staff access is granted only on the server: `php artisan findriva:admin you@example.com` (the account must exist;
 `--revoke` removes it). Staff should turn on two-step sign-in. Every staff action is written to the audit log as `admin.*`.
 
@@ -225,3 +225,13 @@ Staff access is granted only on the server: `php artisan findriva:admin you@exam
   `DELETE /admin/failed-jobs/{uuid}`.
 - `POST /admin/notes` (`workspace_id` or `user_id`, `body`), `DELETE /admin/notes/{id}` (author only). Notes are never shown to customers.
 - `GET /admin/crawl-runs?status=`, `GET /admin/audit-logs?workspace_id=&action=`.
+- `GET /admin/platform`: plans with limits, prices and defaults, modules, AI settings, general switches, and each
+  outside provider (whether its keys are set, never the keys; connection counts). Changes are logged as `platform.settings_updated`.
+- `PUT /admin/platform/plans/{plan}` (`label`, `limits.*`, `price_kobo` for paid plans in whole naira): limits apply at
+  once; a price applies to the next checkout (renewals on a Paystack plan code follow the amount set in Paystack).
+- `PUT /admin/platform/modules` (`keywords, rankings, map_grid, ai_answers, content_studio, public_pages, wordpress,
+  google_profile, bing`: booleans). A paused module answers 403 with `module`, and its scheduled jobs stand down.
+- `PUT /admin/platform/ai` (`answers_enabled`, `answers_model`, `content_engine: template|claude`, `content_model`).
+  Without `ANTHROPIC_API_KEY` every AI feature stays in its no-AI mode.
+- `PUT /admin/platform/general` (`signups_open`, `announcement`).
+- Public: `GET /platform` returns `signups_open`, `announcement` and `modules` for the app.

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\Platform\PlatformConfig;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -52,6 +53,6 @@ class Workspace extends Model
     /** @return array<string, int|null> */
     public function entitlements(): array
     {
-        return config('findriva.plans.'.$this->plan, config('findriva.plans.free'));
+        return app(PlatformConfig::class)->entitlements((string) $this->plan);
     }
 }

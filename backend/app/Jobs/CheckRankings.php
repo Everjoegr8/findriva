@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Business;
 use App\Models\Workspace;
+use App\Services\Platform\PlatformConfig;
 use App\Services\Rankings\RankTracker;
 use App\Support\Tenancy\CurrentWorkspace;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -30,6 +31,9 @@ class CheckRankings implements ShouldBeUnique, ShouldQueue
 
     public function handle(CurrentWorkspace $tenant, RankTracker $tracker): void
     {
+        if (! app(PlatformConfig::class)->moduleOn('rankings')) {
+            return; // switched off in Platform Control
+        }
         $tenant->runAs(Workspace::findOrFail($this->workspaceId), function () use ($tracker) {
             if ($business = Business::query()->find($this->businessId)) {
                 $tracker->run($business, $this->scheduled);

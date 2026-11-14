@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureModuleEnabled;
 use App\Http\Middleware\EnsurePlatformAdmin;
 use App\Http\Middleware\ResolveWorkspace;
 use Illuminate\Foundation\Application;
@@ -19,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'workspace' => ResolveWorkspace::class,
             'platform.admin' => EnsurePlatformAdmin::class,
+            'module' => EnsureModuleEnabled::class,
         ]);
         // Tenant must be known before route model binding so bound models are tenant-scoped.
         $middleware->prependToPriorityList(SubstituteBindings::class, ResolveWorkspace::class);

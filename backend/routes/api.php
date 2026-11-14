@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\AccountController;
 use App\Http\Controllers\Api\V1\ActionController;
 use App\Http\Controllers\Api\V1\Admin\AdminController;
 use App\Http\Controllers\Api\V1\Admin\AdminOpsController;
+use App\Http\Controllers\Api\V1\Admin\AdminPlatformController;
 use App\Http\Controllers\Api\V1\Admin\AdminUsersController;
 use App\Http\Controllers\Api\V1\Admin\AdminWorkspacesController;
 use App\Http\Controllers\Api\V1\AiAnswerController;
@@ -19,6 +20,7 @@ use App\Http\Controllers\Api\V1\DigitalAssetController;
 use App\Http\Controllers\Api\V1\GrowthController;
 use App\Http\Controllers\Api\V1\IntegrationController;
 use App\Http\Controllers\Api\V1\LocalGridController;
+use App\Http\Controllers\Api\V1\PlatformController;
 use App\Http\Controllers\Api\V1\RankingController;
 use App\Http\Controllers\Api\V1\ResultsController;
 use App\Http\Controllers\Api\V1\WordPressController;
@@ -34,6 +36,9 @@ Route::prefix('v1')->group(function () {
         Route::post('password/reset', [AuthController::class, 'resetPassword']);
         Route::get('email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])->middleware('signed')->name('verification.verify');
     });
+
+    // Public platform switches the app needs before sign-in (sign-ups open, announcement, modules).
+    Route::get('platform', [PlatformController::class, 'show'])->middleware('throttle:public');
 
     // Paystack server-to-server notifications (signature checked in the controller).
     Route::post('billing/paystack/webhook', [BillingController::class, 'webhook'])->middleware('throttle:120,1');
@@ -74,7 +79,7 @@ Route::prefix('v1')->group(function () {
 
             Route::get('businesses', [BusinessController::class, 'index']);
             Route::post('businesses', [BusinessController::class, 'store']);
-            Route::prefix('businesses/{business}')->group(function () {
+            Route::prefix('businesses/{business}')->middleware('module')->group(function () {
                 Route::get('/', [BusinessController::class, 'show']);
                 Route::patch('/', [BusinessController::class, 'update']);
                 Route::delete('/', [BusinessController::class, 'destroy']);
@@ -187,6 +192,11 @@ Route::prefix('v1')->group(function () {
             Route::get('failed-jobs', [AdminOpsController::class, 'failedJobs']);
             Route::post('failed-jobs/{uuid}/retry', [AdminOpsController::class, 'retryJob']);
             Route::delete('failed-jobs/{uuid}', [AdminOpsController::class, 'forgetJob']);
+            Route::get('platform', [AdminPlatformController::class, 'show']);
+            Route::put('platform/plans/{plan}', [AdminPlatformController::class, 'updatePlan']);
+            Route::put('platform/modules', [AdminPlatformController::class, 'updateModules']);
+            Route::put('platform/ai', [AdminPlatformController::class, 'updateAi']);
+            Route::put('platform/general', [AdminPlatformController::class, 'updateGeneral']);
             Route::post('notes', [AdminOpsController::class, 'addNote']);
             Route::delete('notes/{note}', [AdminOpsController::class, 'deleteNote']);
         });
