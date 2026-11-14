@@ -141,7 +141,11 @@ class AuthController extends Controller
 
     private function issue(User $user, AuditLogger $audit, bool $mfa = false): JsonResponse
     {
+        if ($user->disabled_at) {
+            throw ValidationException::withMessages(['email' => 'This account is suspended. Email support@eratechnologiz.com.ng if you think this is a mistake.']);
+        }
         auth()->setUser($user);
+        $user->forceFill(['last_login_at' => now()])->saveQuietly();
         $audit->log('auth.login', $user, null, ['mfa' => $mfa], $user->current_workspace_id);
 
         return response()->json([

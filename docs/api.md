@@ -207,5 +207,21 @@ stored. `GET /connect/wordpress/manifest` with `Authorization: Bearer <token>` r
 active, and never receives write access to Findriva.
 
 ## Operations (platform staff)
-`GET /admin/stats`, `GET /admin/workspaces`, `PATCH /admin/workspaces/{id}` (`plan, billing_status`),
-`GET /admin/crawl-runs?status=`, `GET /admin/audit-logs?workspace_id=&action=`.
+Staff access is granted only on the server: `php artisan findriva:admin you@example.com` (the account must exist;
+`--revoke` removes it). Staff should turn on two-step sign-in. Every staff action is written to the audit log as `admin.*`.
+
+- `GET /admin/stats`: people, paying workspaces, monthly recurring revenue (list price, kobo), 30-day revenue,
+  connected accounts, failed jobs, estimated provider spend, audits.
+- `GET /admin/trends?days=30`: daily sign-ups, new workspaces and successful payments.
+- `GET /admin/users?search=&filter=unverified|no_mfa|disabled|staff`, `GET /admin/users/{id}` (workspaces, recent
+  activity, notes). `POST /admin/users/{id}/resend-verification`, `POST .../password-reset` (sends the normal emails;
+  staff never see or set passwords), `POST .../disable` (`reason`; signs the person out everywhere and blocks sign-in;
+  not for staff accounts), `POST .../enable`.
+- `GET /admin/workspaces?search=&plan=` (search matches name, number or a member's email), `GET /admin/workspaces/{id}`
+  (members, businesses with last audit, open actions and connection status, usage this month, payments, activity,
+  notes; never tokens), `PATCH /admin/workspaces/{id}` (`plan, billing_status, current_period_end`; nothing is charged
+  or refunded), `POST /admin/workspaces/{id}/businesses/{business}/audit` (counts against the plan like any audit).
+- `GET /admin/payments?status=`, `GET /admin/failed-jobs` (first line of the error only), `POST /admin/failed-jobs/{uuid}/retry`,
+  `DELETE /admin/failed-jobs/{uuid}`.
+- `POST /admin/notes` (`workspace_id` or `user_id`, `body`), `DELETE /admin/notes/{id}` (author only). Notes are never shown to customers.
+- `GET /admin/crawl-runs?status=`, `GET /admin/audit-logs?workspace_id=&action=`.
